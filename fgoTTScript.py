@@ -2,7 +2,7 @@
 Author: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
 Date: 2023-02-28 17:59:27
 LastEditors: jk 1875809993@qq.com
-LastEditTime: 2023-03-09 15:40:09
+LastEditTime: 2023-03-09 16:10:04
 FilePath: \projectp\set_win.py
 Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 '''
@@ -1539,6 +1539,9 @@ bs=3.75
 
 if __name__ == '__main__':                               # 主程zzzzzzzzzz
     
-    set_win()
+    # set_win()
 
     b=0
+    img=cv2.imread('head.png')
+    imgpr=cv2.resize(img,(1024,1024))
+    cv2.imwrite('headys.jpg',imgpr)
