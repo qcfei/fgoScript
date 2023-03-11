@@ -2,7 +2,7 @@
 Author: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
 Date: 2023-02-28 17:59:27
 LastEditors: jk 1875809993@qq.com
-LastEditTime: 2023-03-09 21:00:33
+LastEditTime: 2023-03-11 21:15:25
 FilePath: \projectp\set_win.py
 Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 '''
@@ -81,7 +81,9 @@ import struct
 from collections import OrderedDict
 import json
 import re
+import miniInstall
 
+from pyminitouch import safe_connection, safe_device, MNTDevice, CommandBuilder
 #minicap相关类
 class Banner:
     def __init__(self):
@@ -218,7 +220,7 @@ class TabWidget_set(QTabWidget):#主窗口             ->None
 
     def update(self) -> None:
         global time_count
-        time_count += 1
+        time_count += 0.5
             
         
         img = QPixmap(scr_road)
@@ -235,6 +237,8 @@ class TabWidget_set(QTabWidget):#主窗口             ->None
             neighbor_state_text+=self.flow_general.name_lst[neighbor_idx]+','
         self.tab1.la_neighborState.setText('neighborState:'+neighbor_state_text)
         self.tab1.la_fightCount.setText('战斗次数:'+str(self.flow_general.fight_current_count))
+        
+        
 
         
     def keyPressEvent(self, event) -> None:
@@ -271,6 +275,7 @@ class Widget_run(QWidget):#运行窗口                 ->主窗口
         self.la_mnq=QLabel('模拟器:'+mnq[mnq_idx])
         self.hbox_description.addWidget(self.la_mnq)
         self.la_fightCount=QLabel('战斗次数:'+'0')
+        # self.la_fightCount.setText("<p style='color:red;'>这是一段html的红色文字</p>")
         self.hbox_description.addWidget(self.la_fightCount)
         self.la_state=QLabel('state:'+'init')
         self.hbox_description.addWidget(self.la_state)
@@ -393,7 +398,7 @@ class Widget_set(QWidget):#设置窗口                 ->主窗口
                               '助战',
                               '多次战斗设置',
                               '模拟器选择',
-                              'value:'+'0']
+                              'value:'+'0',]
         self.num_la:int=len(self.nm_la_lst)-1
         for i in range(self.num_la):
             self.la_lst.append(QLabel(self.nm_la_lst[i]))
@@ -653,6 +658,13 @@ class GroupBox_Mnq(QGroupBox):#模拟器设置                 ->滚动区域
         self.btn_mnq_connect_test.clicked.connect(lambda cnct:self.mnq_test_cnct())
         self.la_test_result=QLabel('none')
         self.vbox.addWidget(self.la_test_result)
+
+
+        self.btn_mini_install=QPushButton('minicap及minitouch安装')
+        self.btn_mini_install.clicked.connect(lambda cnct:self.mini_install_cnct())
+        self.vbox.addWidget(self.btn_mini_install)
+        self.la_install_result=QLabel('none')
+        self.vbox.addWidget(self.la_install_result)
         
 
     def cbb_mnq_cnct(self,total_tab:TabWidget_set):
@@ -675,6 +687,11 @@ class GroupBox_Mnq(QGroupBox):#模拟器设置                 ->滚动区域
         else:
             self.la_test_result.setText('wrong to connect')
 
+            
+    def mini_install_cnct(self):
+        flag=miniInstall.install(ipConnect[mnq_idx])
+        if flag:
+            self.la_install_result.setText('success to install')
 
 class Vbox_Turn(QVBoxLayout):#回合设置              ->策略
     def __init__(self,parent:GroupBox_Strategy,total_tab:TabWidget_set,turnIdx:int):
@@ -719,30 +736,30 @@ class Vbox_Turn(QVBoxLayout):#回合设置              ->策略
         
 
 # class Hbox_assistaaa(QHBoxLayout):#助战设置            ->滚动区域
-#     def __init__(self,idx:int):
-#         super(Hbox_assistaaa, self).__init__()
+    # def __init__(self,idx:int):
+    #     super(Hbox_assistaaa, self).__init__()
 
-#         self.bs=0.7
-#         self.assist_servant_road='material\\fgo\\assist_servant_{}.png'.format(str(idx))
-#         self.assist_cloth_road='material\\fgo\\assist_cloth_{}.png'.format(str(idx))
-#         self.init()
+    #     self.bs=0.7
+    #     self.assist_servant_road='material\\fgo\\assist_servant_{}.png'.format(str(idx))
+    #     self.assist_cloth_road='material\\fgo\\assist_cloth_{}.png'.format(str(idx))
+    #     self.init()
     
-#     def init(self) -> None:
-#         #flsta img
-#         self.la_img_servant=QLabel()
-#         img_shw_w(self.la_img_servant, self.assist_servant_road,self.bs)
-#         self.addWidget(self.la_img_servant)
+    # def init(self) -> None:
+        #flsta img
+        self.la_img_servant=QLabel()
+        img_shw_w(self.la_img_servant, self.assist_servant_road,self.bs)
+        self.addWidget(self.la_img_servant)
 
-#         self.la_img_cloth=QLabel()
-#         img_shw_w(self.la_img_cloth, self.assist_cloth_road,self.bs)
-#         self.addWidget(self.la_img_cloth)
-#         #flsto img
+        self.la_img_cloth=QLabel()
+        img_shw_w(self.la_img_cloth, self.assist_cloth_road,self.bs)
+        self.addWidget(self.la_img_cloth)
+        #flsto img
 
-#         #flsta btn
-#         self.btn_update=QPushButton(text='更新')
-#         self.btn_update.clicked.connect(lambda cnct:self.btn_cnct())
-#         self.addWidget(self.btn_update)
-#         #flsto btn
+        #flsta btn
+        self.btn_update=QPushButton(text='更新')
+        self.btn_update.clicked.connect(lambda cnct:self.btn_cnct())
+        self.addWidget(self.btn_update)
+        #flsto btn
 
 
 #     def btn_cnct(self):
@@ -933,7 +950,7 @@ class State_Before(State_General):
 
     def act(self):
         # 进入
-        adb_cmd('adb shell input tap {} {}'.format(self.y*bs,self.x*bs))
+        adb_cmd('adb shell input tap {} {}'.format(int(self.y*bs),int(self.x*bs)))
         time.sleep(3)
 
         
@@ -954,9 +971,9 @@ class State_Drug(State_General):
         #嗑药
         for pos in self.pos_lst[self.apple_index]:
             if pos[0]=='t':
-                adb_cmd('adb shell input tap {} {}'.format(pos[2]*bs,pos[1]*bs))
+                adb_cmd('adb shell input tap {} {}'.format(int(pos[2]*bs),int(pos[1]*bs)))
             elif pos[0]=='s':
-                adb_cmd('adb shell input swipe {} {} {} {} {}'.format(pos[1]*bs,pos[2]*bs,pos[3]*bs,pos[4]*bs,pos[5]))
+                adb_cmd('adb shell input swipe {} {} {} {} {}'.format(int(pos[1]*bs),int(pos[2]*bs),int(pos[3]*bs),int(pos[4]*bs),pos[5]))
             time.sleep(0.3)
         time.sleep(3)
 
@@ -990,47 +1007,47 @@ class State_AssistChoose(State_General):
         self.pos=[120,260]
 
 
-    def act_addidate(self):
-        #判断是否有可用从者
-        time.sleep(3)
-        print('进行战斗次数'+str(self.parent.fight_current_count))
-        self.console_log.log_update('进行战斗次数'+str(self.parent.fight_current_count))
-        chooseTurn=1
-        servantCount=0
-        while True:
-            servantCount+=1
-        #判断从者、礼装是否正确
-            flag=0
-            print('Aassist Servant Choose Try {}'.format(str(servantCount)))
-            self.console_log.log_update('assist servant choose try {}'.format(str(servantCount)))
-            for index in range(3):
-                servant_flag=check(self.servant_img_lst[index],scr[self.x:self.x+self.w,self.y:self.y+self.h],self.para,8)
-                cloth_flag=check(self.cloth_img_lst[index],scr[self.x:self.x+self.w,self.y:self.y+self.h],self.para,5)
-                print(servant_flag,cloth_flag)
-                self.console_log.log_update('Servant:'+str(servant_flag)+'  Cloth:'+str(cloth_flag))
-                if servant_flag and cloth_flag:
-                    flag=1
-                    break
-            if flag==1:
-                # 判断正确
-                adb_cmd('adb shell input tap {} {}'.format(self.pos[1]*bs,self.pos[0]*bs))
-                print('Success')
-                self.console_log.log_update('Success')
-                time.sleep(4)
-                break
-            else:
-                # 判断错误
-                adb_cmd('adb shell input swipe 400 740 400 500 500')
-                time.sleep(4)
-                print('Fail')
-                self.console_log.log_update('Fail')
-            if servantCount==5:
-                chooseTurn+=1
-                servantCount=0
-                adb_cmd('adb shell input tap {} {}'.format(380*bs,60*bs))
-                time.sleep(1)
-                adb_cmd('adb shell input tap {} {}'.format(350*bs,230*bs))
-                time.sleep(2)
+    # def act_addidate(self):
+    #     #判断是否有可用从者
+    #     time.sleep(3)
+    #     print('进行战斗次数'+str(self.parent.fight_current_count))
+    #     self.console_log.log_update('进行战斗次数'+str(self.parent.fight_current_count))
+    #     chooseTurn=1
+    #     servantCount=0
+    #     while True:
+    #         servantCount+=1
+    #     #判断从者、礼装是否正确
+    #         flag=0
+    #         print('Aassist Servant Choose Try {}'.format(str(servantCount)))
+    #         self.console_log.log_update('assist servant choose try {}'.format(str(servantCount)))
+    #         for index in range(3):
+    #             servant_flag=check(self.servant_img_lst[index],scr[self.x:self.x+self.w,self.y:self.y+self.h],self.para,8)
+    #             cloth_flag=check(self.cloth_img_lst[index],scr[self.x:self.x+self.w,self.y:self.y+self.h],self.para,5)
+    #             print(servant_flag,cloth_flag)
+    #             self.console_log.log_update('Servant:'+str(servant_flag)+'  Cloth:'+str(cloth_flag))
+    #             if servant_flag and cloth_flag:
+    #                 flag=1
+    #                 break
+    #         if flag==1:
+    #             # 判断正确
+    #             adb_cmd('adb shell input tap {} {}'.format(int(self.pos[1]*bs),int(self.pos[0]*bs)))
+    #             print('Success')
+    #             self.console_log.log_update('Success')
+    #             time.sleep(4)
+    #             break
+    #         else:
+    #             # 判断错误
+    #             adb_cmd('adb shell input swipe 400 740 400 500 500')
+    #             time.sleep(4)
+    #             print('Fail')
+    #             self.console_log.log_update('Fail')
+    #         if servantCount==5:
+    #             chooseTurn+=1
+    #             servantCount=0
+    #             adb_cmd('adb shell input tap {} {}'.format(int(380*bs),int(60*bs)))
+    #             time.sleep(1)
+    #             adb_cmd('adb shell input tap {} {}'.format(int(350*bs),int(230*bs)))
+    #             time.sleep(2)
 
 
     def act(self):
@@ -1068,7 +1085,7 @@ class State_AssistChoose(State_General):
 
             if flag==1:
                 # 判断正确
-                adb_cmd('adb shell input tap {} {}'.format(xca*bs,yca*bs))
+                adb_cmd('adb shell input tap {} {}'.format(int(xca*bs),int(yca*bs)))
                 print('Success')
                 self.console_log.log_update('Success')
                 time.sleep(1)
@@ -1082,9 +1099,9 @@ class State_AssistChoose(State_General):
             if servantCount==6:
                 chooseTurn+=1
                 servantCount=0
-                adb_cmd('adb shell input tap {} {}'.format(380*bs,60*bs))
+                adb_cmd('adb shell input tap {} {}'.format(int(380*bs),int(60*bs)))
                 time.sleep(1)
-                adb_cmd('adb shell input tap {} {}'.format(350*bs,230*bs))
+                adb_cmd('adb shell input tap {} {}'.format(int(350*bs),int(230*bs)))
                 time.sleep(1)
 
 
@@ -1095,7 +1112,7 @@ class State_Prepare(State_General):
 
     def act(self):
         #点击进入下一state
-        adb_cmd('adb shell input tap {} {}'.format(self.y*bs,self.x*bs))
+        adb_cmd('adb shell input tap {} {}'.format(int(self.y*bs),int(self.x*bs)))
 
 
 class State_Fight(State_General):
@@ -1118,7 +1135,7 @@ class State_Result(State_General):
     def act(self):
         #点击多下  进入再来一次环节
         for i in range(5):
-            adb_cmd('adb shell input tap {} {}'.format(self.y*bs,self.x*bs))
+            adb_cmd('adb shell input tap {} {}'.format(int(self.y*bs),int(self.x*bs)))
             time.sleep(0.3)
         self.parent.fight_current_count+=1
 
@@ -1134,9 +1151,9 @@ class State_FightAgain(State_General):
     
     def act(self):
         if self.isAgain:
-            adb_cmd('adb shell input tap {} {}'.format(self.yAgain*bs,self.xAgain*bs))
+            adb_cmd('adb shell input tap {} {}'.format(int(self.yAgain*bs),int(self.xAgain*bs)))
         else:
-            adb_cmd('adb shell input tap {} {}'.format(self.yExit*bs,self.xExit*bs))
+            adb_cmd('adb shell input tap {} {}'.format(int(self.yExit*bs),int(self.xExit*bs)))
         
 
 class State_Skill(State_InFight):
@@ -1261,7 +1278,7 @@ class Thread_Update(QThread):#更新屏幕              ->主窗口
             if self._isPause:
                 self.cond.wait(self.mutex)
             self.total_tab.update()
-            time.sleep(1)
+            time.sleep(0.5)
             self.mutex.unlock()  # 解锁
          
     def pause(self):    
@@ -1394,7 +1411,7 @@ def check(state) -> bool:
             return True
 
 
-# def connect(chd: np.matrix, prt: np.matrix, para: float):  # chd:child prt:parent
+# # def connect(chd: np.matrix, prt: np.matrix, para: float):  # chd:child prt:parent
 #     sift = cv2.SIFT_create()
 #     # if str(type(chd))!="<class 'NoneType'>" and str(type(prt))!="<class 'NoneType'>" and not (prt[:,0:int(prt.shape[1]/2),:]==prt[:,int(prt.shape[1]/2):,:]).all() :
 #     if str(type(chd))!="<class 'NoneType'>" and prt is not None and prt.size!=0:
@@ -1475,6 +1492,7 @@ def set_win():
 def init_thread():
     global time_count
     global bs
+    global device
     subprocess.run('adb disconnect')
     subprocess.run('adb connect '+ipConnect[mnq_idx])
     # 获取屏幕分辨率和放大倍数
@@ -1501,14 +1519,33 @@ def init_thread():
     #     time.sleep(2)
     os.popen('adb forward tcp:1717 localabstract:minicap')  # 执行了adb端口转发
     os.popen('adb shell LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -Q 40 -P {}x{}@{}x{}/0'.format(fbl_lst[0],fbl_lst[1],outputx,outputy))  # 启动了minicap服务
+    _DEVICE_ID = '127.0.0.1:62001'
+    
+    device = MNTDevice(_DEVICE_ID)
     # os.popen('adb shell LD_LIBRARY_PATH=/data/local/tmp /data/local/tmp/minicap -Q 40 -P {}x{}@{}x{}/0'.format(fbl_lst[0],fbl_lst[1],fbl_lst[0],fbl_lst[1]))  # 启动了minicap服务
     
     time_count =0
 
 
 def adb_cmd(text:str):
-    txt=text.replace('adb',r'platform-tools_r33.0.3-windows\platform-tools\adb.exe')
-    subprocess.run(txt, shell=True)
+    adb_rec_str=re.compile(r'adb shell input')
+    num_par=re.compile(r'\d+')
+    if adb_rec_str.findall(text):
+        num_lst=list(map(int,num_par.findall(text)))
+        if re.findall('tap',text):
+            num_lst=tuple(num_lst)
+            device.tap([num_lst])
+        # elif re.findall('swipe',text):
+        #     num_1=tuple(num_lst[0:2])
+        #     num_2=tuple(num_lst[2:4])
+        #     # device.swipe([num_1,num_2],duration=num_lst[4])
+        #     device.swipe([num_1,num_2],duration=3e2)
+        else:
+            txt=text.replace('adb',r'platform-tools_r33.0.3-windows\platform-tools\adb.exe')
+            subprocess.run(txt, shell=True)
+    else:
+        txt=text.replace('adb',r'platform-tools_r33.0.3-windows\platform-tools\adb.exe')
+        subprocess.run(txt, shell=True)
 
 
 def json_read() -> dict:
@@ -1537,6 +1574,20 @@ bs=3.75
 
 if __name__ == '__main__':                               # 主程zzzzzzzzzz
     
+
     set_win()
+    # os.popen('adb connect 127.0.0.1:62001')
+    # os.popen('adb forward tcp:1111 localabstract:minitouch')  # 执行了adb端口转发
+    # os.popen('adb shell LD_LIBRARY_PATH=/data/local/tmp/minitouch /data/local/tmp/minitouch/minitouch')  # 启动了minitouch服务
+    # socket_touch = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # socket_touch.connect(('localhost',1111))
+    # data_uft8='d 0 100 100 50\nc\n'
+    # data=data_uft8.encode()
+    # socket_touch.send(data)
+
+
+    
+    # print the maximum x and Y coordinates
+
 
     b=0
