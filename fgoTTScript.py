@@ -2,7 +2,7 @@
 Author: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
 Date: 2023-02-28 17:59:27
 LastEditors: jk 1875809993@qq.com
-LastEditTime: 2023-03-09 21:00:33
+LastEditTime: 2023-03-10 13:48:16
 FilePath: \projectp\set_win.py
 Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 '''
@@ -235,6 +235,8 @@ class TabWidget_set(QTabWidget):#主窗口             ->None
             neighbor_state_text+=self.flow_general.name_lst[neighbor_idx]+','
         self.tab1.la_neighborState.setText('neighborState:'+neighbor_state_text)
         self.tab1.la_fightCount.setText('战斗次数:'+str(self.flow_general.fight_current_count))
+        
+        
 
         
     def keyPressEvent(self, event) -> None:
@@ -271,6 +273,7 @@ class Widget_run(QWidget):#运行窗口                 ->主窗口
         self.la_mnq=QLabel('模拟器:'+mnq[mnq_idx])
         self.hbox_description.addWidget(self.la_mnq)
         self.la_fightCount=QLabel('战斗次数:'+'0')
+        # self.la_fightCount.setText("<p style='color:red;'>这是一段html的红色文字</p>")
         self.hbox_description.addWidget(self.la_fightCount)
         self.la_state=QLabel('state:'+'init')
         self.hbox_description.addWidget(self.la_state)
@@ -393,7 +396,7 @@ class Widget_set(QWidget):#设置窗口                 ->主窗口
                               '助战',
                               '多次战斗设置',
                               '模拟器选择',
-                              'value:'+'0']
+                              'value:'+'0',]
         self.num_la:int=len(self.nm_la_lst)-1
         for i in range(self.num_la):
             self.la_lst.append(QLabel(self.nm_la_lst[i]))
