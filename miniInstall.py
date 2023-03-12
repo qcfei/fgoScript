@@ -2,7 +2,7 @@
 Author: jk 1875809993@qq.com
 Date: 2023-03-11 19:30:40
 LastEditors: jk 1875809993@qq.com
-LastEditTime: 2023-03-11 20:48:28
+LastEditTime: 2023-03-13 07:53:20
 FilePath: \decline\miniInstall.py
 Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 '''
@@ -46,7 +46,7 @@ def install(ip:str):
     else:
         cmd('adb shell rm -r /data/local/tmp/minitouch')
         minitouch_install(minitouch_fn)
-    if not re.findall('minitouch',mnq_fs_str):
+    if not re.findall('minicap',mnq_fs_str):
         minicap_install(minicapso_fn,minicap_fn)
     else:
         cmd('adb shell rm -r /data/local/tmp/minicap')
@@ -54,7 +54,7 @@ def install(ip:str):
         minicap_install(minicapso_fn,minicap_fn)
     cmd('adb disconnect')
 
-    return True
+    return True,struc,sdk
 
 
 if __name__ == '__main__':
