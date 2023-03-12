@@ -1,15 +1,26 @@
+<!--
+ * @Author: jk 1875809993@qq.com
+ * @Date: 2023-03-04 11:54:59
+ * @LastEditors: jk 1875809993@qq.com
+ * @LastEditTime: 2023-03-11 07:46:40
+ * @FilePath: \undefinedd:\bin\vscodeProject\project\python\adb_controller\decline\README
+ * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
+-->
 content
 一、预先下载的文件
 二、操作说明
 三、可能出现的错误
 
 一、预先下载的文件
-    1、scrcpy
-        下载地址：https://github.com/Genymobile/scrcpy
-        下载安装过后将exe文件绝对路径复制到界面设置对应位置中
+    1、airtest
+        地址：http://airtest.netease.com/
+        为了在模拟器中安装版本适配的minicap以及minitouch，需要下载airtestIDE并成功连接模拟器一次，此时两者会自动安装进模拟器。
+        后续将更新自主安装上两者的代码，届时将无需下载airtest
 二、操作说明
-    1、模拟器需root
     2、模拟器adb连接视作通过WiFi连接，需输入连接地址，可通过网页搜索获得
 三、可能出现的错误
     1、状态栏与实际状态不符导致的脚本不工作
         解决方法：点击“reset”重置状态进入“init”状态，后将自动进入对应状态
+    2、因为各种各样的问题闪退，或未使用esc键闪退
+        这将造成minicap不正确关闭，这将占用部分资源。如需继续使用，重启重新开始即可；但若不想继续使用，也需重启，使用esc正常退出，或者使用adb命令："adb kill-server"
+        

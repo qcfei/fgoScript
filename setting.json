@@ -1,7 +1,7 @@
 {
   "changable": {
     "again": {
-      "appleIndex": 1,
+      "appleIndex": 3,
       "fight_count": 3,
       "isAgain": true
     },
@@ -297,6 +297,16 @@
           ]
         ]
       }
+    }
+  },
+  "mnq": {
+    "mumu": {
+      "name": "mumu",
+      "ip": "127.0.0.1:7555"
+    },
+    "nox": {
+      "name": "nox",
+      "ip": "127.0.0.1:62001"
     }
   }
 }
