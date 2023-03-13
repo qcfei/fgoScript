@@ -2,7 +2,7 @@
 Author: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
 Date: 2023-02-28 17:59:27
 LastEditors: jk 1875809993@qq.com
-LastEditTime: 2023-03-13 07:53:22
+LastEditTime: 2023-03-13 09:22:15
 FilePath: \projectp\set_win.py
 Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 '''
@@ -180,7 +180,7 @@ class TabWidget_set(QTabWidget):#主窗口             ->None
     def __init__(self):
         global mnq_idx
         super(TabWidget_set, self).__init__()
-        self.setGeometry(300, 500, 1100, 700)
+        self.setGeometry(300, 500, 1100, 600)
         self.setWindowTitle('fgoTTScript')
         self.setWindowIcon(QIcon('litShk.ico'))
         # self.setMaximumSize(1000, 700)
@@ -435,7 +435,8 @@ class HBox_screen(QHBoxLayout):#显示模拟器画面       ->运行窗口
         
         self.vbox_screen = QVBoxLayout()
         self.addLayout(self.vbox_screen)
-        self.vbox_screen.addStretch(1)
+        self.la_time = QLabel('0')
+        self.vbox_screen.addWidget(self.la_time)
         self.la_screen = QLabel()
         self.la_screen.setPixmap(QPixmap(scr_road))
         self.vbox_screen.addWidget(self.la_screen)
@@ -443,8 +444,6 @@ class HBox_screen(QHBoxLayout):#显示模拟器画面       ->运行窗口
         self.splitter_log=QSplitter()
         self.splitter_log.setOrientation(Qt.Vertical)
         self.addWidget(self.splitter_log)
-        self.la_time = QLabel('0')
-        self.splitter_log.addWidget(self.la_time)
         self.scroll_log=QScrollArea()
         self.scroll_log.setFixedHeight(450)
         self.splitter_log.addWidget(self.scroll_log)
@@ -657,11 +656,6 @@ class GroupBox_Mnq(QGroupBox):#模拟器设置                 ->滚动区域
         self.vbox.addWidget(self.la_test_result)
 
 
-        self.btn_mini_install=QPushButton('minicap及minitouch安装')
-        self.btn_mini_install.clicked.connect(lambda cnct:self.mini_install_cnct())
-        self.vbox.addWidget(self.btn_mini_install)
-        self.la_install_result=QLabel('none')
-        self.vbox.addWidget(self.la_install_result)
         
 
         self.le_add=QLineEdit()
@@ -679,6 +673,13 @@ class GroupBox_Mnq(QGroupBox):#模拟器设置                 ->滚动区域
         self.btn_del.clicked.connect(lambda cnct:self.mnq_del())
         self.vbox.addWidget(self.btn_del)
         
+
+
+        self.btn_mini_install=QPushButton('minicap及minitouch安装')
+        self.btn_mini_install.clicked.connect(lambda cnct:self.mini_install_cnct())
+        self.vbox.addWidget(self.btn_mini_install)
+        self.la_install_result=QLabel('none')
+        self.vbox.addWidget(self.la_install_result)
 
     def cbb_mnq_cnct(self,total_tab:TabWidget_set):
         global mnq_idx
@@ -703,9 +704,20 @@ class GroupBox_Mnq(QGroupBox):#模拟器设置                 ->滚动区域
             
     def mini_install_cnct(self):
         flag,struc,sdk=miniInstall.install(ipConnect[mnq_idx])
-        text="structure: "+struc+'\nsdk: '+sdk+'\nsuccess to install'
+        mnq_fs_str=subprocess.getoutput('adb shell ls /data/local/tmp').split('\n')
+        txt=''
+        count=0
+        for mnq_fs in mnq_fs_str:
+            if re.findall('mini',mnq_fs):
+                txt+=mnq_fs+'\t'
+                count+=1
+            if count==2:
+                txt+='\n'
+        text="structure: "+struc+'\nsdk: '+sdk+'\nsuccess to install\n'+txt
         if flag:
             self.la_install_result.setText(text)
+            # print(text)
+            # self.la_install_result.setFixedHeight(800)
 
 
     def mnq_add(self):

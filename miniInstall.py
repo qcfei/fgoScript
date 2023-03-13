@@ -22,14 +22,15 @@ def minicap_install(minicapso_fn:str,minicap_fn:str):
 
 
 def mnq_para_get():
-    struc=subprocess.getoutput('adb shell getprop ro.product.cpu.abi')
-    sdk=subprocess.getoutput('adb shell getprop ro.build.version.sdk')
+    struc=subprocess.getoutput('adb shell getprop ro.product.cpu.abi').split('\n')[0]
+    sdk=subprocess.getoutput('adb shell getprop ro.build.version.sdk').split('\n')[0]
 
     return struc,sdk
 
 
 def cmd(text:str):
     txt=text.replace('adb',r'platform-tools_r33.0.3-windows\platform-tools\adb.exe')
+    print(txt)
     subprocess.run(txt, shell=True)
 
 
@@ -52,14 +53,13 @@ def install(ip:str):
         cmd('adb shell rm -r /data/local/tmp/minicap')
         cmd('adb shell rm -r /data/local/tmp/minicap.so')
         minicap_install(minicapso_fn,minicap_fn)
-    cmd('adb disconnect')
 
     return True,struc,sdk
 
 
 if __name__ == '__main__':
 
-    cmd('adb connect 127.0.0.1:62001')
+    cmd('adb connect 127.0.0.1:7555')
     struc,sdk=mnq_para_get()
     minicapso_fn=r'minicap\minicap-shared\aosp\libs\android-{}\{}\minicap.so'.format(sdk,struc)
     minicap_fn=r'minicap\{}\minicap'.format(struc)
