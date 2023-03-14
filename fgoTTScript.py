@@ -2,7 +2,7 @@
 Author: error: error: git config user.name & please set dead value or install git && error: git config user.email & please set dead value or install git & please set dead value or install git
 Date: 2023-02-28 17:59:27
 LastEditors: jk 1875809993@qq.com
-LastEditTime: 2023-03-13 09:22:15
+LastEditTime: 2023-03-14 13:21:46
 FilePath: \projectp\set_win.py
 Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
 '''
@@ -808,12 +808,9 @@ class Hbox_assist(QHBoxLayout):#助战设置            ->滚动区域
 
     def btn_cnct(self):
         #parameter_get
-        para_fn='settings\\fixed\\paspn\\assist_pas.txt'
-        para_f=open(para_fn,'r')
-        para=para_f.read().split('\n')
-        para_f.close()
+        settings=json_read()['fixed']['paspn']['assist_pas']
 
-        assist_servant_pas,assist_cloth_pas=list(map(int,para[0].split(' '))),list(map(int,para[1].split(' ')))
+        assist_servant_pas,assist_cloth_pas=settings['assist_servant'],settings['assist_cloth']
 
         scr_cap(assist_servant_pas,scr_road,self.assist_servant_road)
         img_shw_w(self.la_img_servant, self.assist_servant_road,self.bs)
@@ -1131,7 +1128,7 @@ class State_Result(State_General):
     
     def act(self):
         #点击多下  进入再来一次环节
-        for i in range(5):
+        for i in range(7):
             adb_cmd('adb shell input tap {} {}'.format(int(self.y*bs),int(self.x*bs)))
             time.sleep(0.3)
         self.parent.fight_current_count+=1
@@ -1505,19 +1502,7 @@ if __name__ == '__main__':                               # 主程zzzzzzzzzz
     
 
     set_win()
-    # os.popen('adb connect 127.0.0.1:62001')
-    # os.popen('adb forward tcp:1111 localabstract:minitouch')  # 执行了adb端口转发
-    # os.popen('adb shell LD_LIBRARY_PATH=/data/local/tmp/minitouch /data/local/tmp/minitouch/minitouch')  # 启动了minitouch服务
-    # socket_touch = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # socket_touch.connect(('localhost',1111))
-    # data_uft8='d 0 100 100 50\nc\n'
-    # data=data_uft8.encode()
-    # socket_touch.send(data)
-
-
     
-    # print the maximum x and Y coordinates
-
 
 
     b=0

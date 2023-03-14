@@ -2,17 +2,17 @@
   "changable": {
     "again": {
       "appleIndex": 3,
-      "fight_count": 3,
+      "fight_count": 2,
       "isAgain": true
     },
     "isCloth": {
       "isCloth": false
     },
     "mnqChoose": {
-      "mnqChoose": 0
+      "mnqChoose": 1
     },
     "sao": {
-      "strategyChoose": 1,
+      "strategyChoose": 2,
       "strategy1": {
         "off_act": "",
         "skill1_act": "110 231 331",
@@ -96,7 +96,7 @@
         0,
         70,
         510,
-        0.6,
+        0.5,
         40
       ],
       "prepare_paspn": [
