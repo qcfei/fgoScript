@@ -81,8 +81,10 @@ from collections import OrderedDict
 import json
 import re
 import miniInstall
-from pyminitouch import safe_connection, safe_device, MNTDevice, CommandBuilder
-
+from log import *
+from thread import *
+from CollapsibleBox import *
+from qt_material import apply_stylesheet
 from pyminitouch import safe_connection, safe_device, MNTDevice, CommandBuilder
 #minicap相关类
 class Banner:
@@ -180,7 +182,7 @@ class TabWidget_set(QTabWidget):#主窗口             ->None
     def __init__(self):
         global mnq_idx
         super(TabWidget_set, self).__init__()
-        self.setGeometry(300, 500, 1100, 700)
+        self.setGeometry(300, 500, 1100, 600)
         self.setWindowTitle('fgoTTScript')
         self.setWindowIcon(QIcon('litShk.ico'))
         # self.setMaximumSize(1000, 700)
@@ -193,8 +195,8 @@ class TabWidget_set(QTabWidget):#主窗口             ->None
         self.tab1 :Widget_run= Widget_run(self)
         self.addTab(self.tab1, '运行')
 
-        self.console_log=Log(self)
-        
+        self.console_log=Log(self.tab1.hbox_screen.la_log)
+        # self.action_queue=Action_Queue()
 
         self.flow_fight=Flow_Fight(self)
         self.flow_general=Flow_General(self)
@@ -212,6 +214,8 @@ class TabWidget_set(QTabWidget):#主窗口             ->None
         self.thread_run=Thread_Run(self)
         self.thread_mc=Thread_Minicap(self)
         self.thread_init=Thread_Init(self)
+        # self.thread_queue=Thread_Queue(self)
+        self.thread_test=Thread_Test(self)
 
         
 
@@ -244,7 +248,7 @@ class TabWidget_set(QTabWidget):#主窗口             ->None
     def keyPressEvent(self, event) -> None:
         if event.key() == Qt.Key_Escape:
             if self.mc.isConnected :
-                self.thread_update.terminate()
+                self.thread_update._isRun=False
                 self.thread_mc.terminate()
                 self.mc.socket.close()
                 adb_cmd('adb kill-server')
@@ -259,8 +263,7 @@ class TabWidget_set(QTabWidget):#主窗口             ->None
 class Widget_run(QWidget):#运行窗口                 ->主窗口
     def __init__(self,total_tab:TabWidget_set):
         super(Widget_run, self).__init__()
-
-
+        self.tt_isRunning = False
 
         self.init(total_tab)
 
@@ -305,6 +308,7 @@ class Widget_run(QWidget):#运行窗口                 ->主窗口
         self.btn_connect_start.clicked.connect(lambda cnct:self.connect_start_cnct(total_tab))
         self.hbox_switch.addWidget(self.btn_connect_start)
         self.btn_connect_stop = QPushButton(text='连接结束')
+        # self.btn_connect_stop.setStyleSheet('color: pink')
         self.btn_connect_stop.clicked.connect(lambda cnct:self.connect_stop_cnct(total_tab))
         self.btn_connect_stop.setEnabled(False)
         self.hbox_switch.addWidget(self.btn_connect_stop)
@@ -320,7 +324,16 @@ class Widget_run(QWidget):#运行窗口                 ->主窗口
 
 
     def test_cnct(self,total_tab:TabWidget_set):
-        total_tab.console_log.log_update('aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+        if not self.tt_isRunning:
+            total_tab.thread_test.start()
+            self.tt_isRunning=True
+        else:
+            # if total_tab.thread_test._isPause:
+            #     total_tab.thread_test.resume()
+            # else:
+            #     total_tab.thread_test.pause()
+            total_tab.thread_test._isRun=False
+            self.tt_isRunning=False
         
 
     def reset_cnct(self,total_tab:TabWidget_set):
@@ -355,7 +368,7 @@ class Widget_run(QWidget):#运行窗口                 ->主窗口
     def connect_stop_cnct(self,total_tab:TabWidget_set):
         self.btn_connect_stop.setEnabled(False)
         self.btn_connect_start.setText('连接开始')
-        total_tab.thread_update.terminate()
+        total_tab.thread_update._isRun=False
         total_tab.thread_mc.terminate()
         total_tab.mc.socket.close()
         adb_cmd('adb kill-server')
@@ -365,6 +378,7 @@ class Widget_run(QWidget):#运行窗口                 ->主窗口
         text_lst=['运行开始','运行暂停','运行恢复']
         if self.btn_script_start.text()==text_lst[0]:
             total_tab.thread_run.start()
+            # total_tab.thread_queue.start()
             self.btn_script_start.setText(text_lst[1])
         elif self.btn_script_start.text()==text_lst[1]:
             self.btn_script_start.setText(text_lst[2])
@@ -378,6 +392,12 @@ class Widget_run(QWidget):#运行窗口                 ->主窗口
 
     def script_stop_cnct(self,total_tab:TabWidget_set):
         total_tab.console_log.log_reset()
+        total_tab.thread_run._isRun=False
+        # total_tab.thread_queue._isRun=False
+        total_tab.flow_fight.state_idx=0
+        total_tab.flow_general.state_idx=0
+        total_tab.flow_general.fight_current_count=0
+        self.btn_script_start.setText('运行开始')
 
 
 class Widget_set(QWidget):#设置窗口                 ->主窗口
@@ -400,28 +420,39 @@ class Widget_set(QWidget):#设置窗口                 ->主窗口
         self.num_la:int=len(self.nm_la_lst)-1
         for i in range(self.num_la):
             self.la_lst.append(QLabel(self.nm_la_lst[i]))
+            self.la_lst[-1].setFixedWidth(200)
             self.setTitle_list.addWidget(self.la_lst[i])
-        self.la_lst[0].setStyleSheet("background-color:#cccccc;")
+        # self.la_lst[0].setStyleSheet("background-color:#cccccc;")
+        self.la_lst[0].setStyleSheet("background-color:#888888;")
         self.setTitle_list.addStretch(1)
 
         self.scrollArea_setting=ScrollArea_setting(total_tab)
-        self.scrollArea_setting.setFixedWidth(700)
+        self.scrollArea_setting.setFixedWidth(850)
         self.scrollArea_setting.verticalScrollBar().valueChanged.connect(lambda cnct: self.scrollBar_cnct())
         self.hbox.addWidget(self.scrollArea_setting)
 
+        self.hbox.addStretch(1)
+
     def scrollBar_cnct(self):
+        h0=self.scrollArea_setting.qb_strategy.height()
+        h1=h0+self.scrollArea_setting.qb_assist.height()
+        h2=h1+self.scrollArea_setting.qb_continue.height()
+        # h3=self.scrollArea_setting.qb_mnq.height()
+
         value=self.scrollArea_setting.verticalScrollBar().value()
-        if value<500:
+        if value<h0:
             idx=0
-        elif value<840:
+        elif value<h1:
             idx=1
-        elif value<890:
+        elif value<h2:
             idx=2
         else:
             idx=3
         for i in range(self.num_la):
-            self.la_lst[i].setStyleSheet("background-color:#ffffff;")
-        self.la_lst[idx].setStyleSheet("background-color:#cccccc;")
+            # self.la_lst[i].setStyleSheet("background-color:#e5e5e5;")
+            self.la_lst[i].setStyleSheet("background-color:#313631;")
+        # self.la_lst[idx].setStyleSheet("background-color:#cccccc;")
+        self.la_lst[idx].setStyleSheet("background-color:#888888;")
                 
 
 #           子布局
@@ -444,12 +475,15 @@ class HBox_screen(QHBoxLayout):#显示模拟器画面       ->运行窗口
         self.splitter_log.setOrientation(Qt.Vertical)
         self.addWidget(self.splitter_log)
         self.la_time = QLabel('0')
+        self.la_time.setFixedHeight(20)
         self.splitter_log.addWidget(self.la_time)
         self.scroll_log=QScrollArea()
-        self.scroll_log.setFixedHeight(450)
+        self.scroll_log.setWidgetResizable(True)
+        # self.scroll_log.setFixedHeight(450)
         self.splitter_log.addWidget(self.scroll_log)
         self.la_log=QLabel('none')
         self.la_log.setFixedWidth(530)
+        self.la_log.setStyleSheet('font-size: 13pt;style=line-height:150%')
         self.scroll_log.setWidget(self.la_log)
 
     def log_change(self,text:str):
@@ -462,10 +496,12 @@ class ScrollArea_setting(QScrollArea):#设置滚动区域   ->设置窗口
 
         self.strategy_idx=total_tab.settings['changable']['sao']['strategyChoose']-1
         self.flow_fight=total_tab.flow_fight
+        self.strategy_count=total_tab.settings['changable']['sao']['strategyCount']
         self.init(total_tab)
 
     def init(self,total_tab:TabWidget_set) -> None:
         self.win_scrollArea=QSplitter()
+        self.setWidgetResizable(True)
         self.win_scrollArea.setOrientation(Qt.Vertical)
 
 
@@ -473,19 +509,35 @@ class ScrollArea_setting(QScrollArea):#设置滚动区域   ->设置窗口
         self.win_scrollArea.addWidget(self.qb_strategy)
         self.qb_strategy_vbox=QVBoxLayout()
         self.qb_strategy.setLayout(self.qb_strategy_vbox)
-        self.qb_strategy_lst:list[GroupBox_Strategy]=[]
-        self.qb_strategy_num=2
-        for i in range(self.qb_strategy_num):
-            self.qb_strategy_lst.append(GroupBox_Strategy(total_tab,i+1))
-            self.qb_strategy_vbox.addWidget(self.qb_strategy_lst[i])
+
+        
         self.la_strategyChoose=QLabel('策略选择')
         self.qb_strategy_vbox.addWidget(self.la_strategyChoose)
         self.cb_strategyChoose=QComboBox()
-        self.cb_strategyChoose.addItems(['1',
-                                '2',])
+        for i in range(self.strategy_count):
+            self.cb_strategyChoose.addItem(str(i+1))
         self.cb_strategyChoose.setCurrentIndex(self.strategy_idx)
         self.cb_strategyChoose.currentIndexChanged.connect(lambda cnct:self.cb_strategyChoose_cnct(total_tab))
         self.qb_strategy_vbox.addWidget(self.cb_strategyChoose)
+
+        self.btn_addCount=QPushButton('add')
+        self.btn_addCount.clicked.connect(lambda cnct:self.btn_addCount_cnct(total_tab))
+        self.qb_strategy_vbox.addWidget(self.btn_addCount)
+
+        self.btn_declineCount=QPushButton('remove')
+        self.btn_declineCount.clicked.connect(lambda cnct:self.btn_declineCount_cnct(total_tab))
+        self.qb_strategy_vbox.addWidget(self.btn_declineCount)
+        
+        self.qb_strategy_lst:list[GroupBox_Strategy]=[]
+        self.cpb_strategy_lst:list[CollapsibleBox]=[]
+        for i in range(self.strategy_count):
+            self.qb_strategy_lst.append(GroupBox_Strategy(total_tab,i+1))
+            self.cpb_strategy_lst.append(CollapsibleBox("strategy-{}".format(i+1)))
+            self.qb_strategy_vbox.addWidget(self.cpb_strategy_lst[i])
+            # self.qb_strategy_vbox.addWidget(self.qb_strategy_lst[i])
+            self.cpb_strategy_lst[i].setContentLayout(self.qb_strategy_lst[i])
+
+
 
         self.qb_assist=GroupBox_Assist(total_tab)
         self.win_scrollArea.addWidget(self.qb_assist)
@@ -510,12 +562,39 @@ class ScrollArea_setting(QScrollArea):#设置滚动区域   ->设置窗口
         json_save(total_tab.settings)
 
 
-class GroupBox_Strategy(QGroupBox):#策略设置            ->滚动区域
+    def btn_addCount_cnct(self,total_tab:TabWidget_set):
+        self.strategy_count+=1
+        total_tab.settings['changable']['sao']['strategyCount']+=1
+
+        total_tab.settings['changable']['sao']['strategy'+str(self.strategy_count)]=total_tab.settings['changable']['sao']['strategy'+str(self.strategy_count-1)]
+        json_save(total_tab.settings)
+        self.cb_strategyChoose.addItem(str(self.strategy_count))
+        self.qb_strategy_lst.append(GroupBox_Strategy(total_tab,self.strategy_count))
+        self.cpb_strategy_lst.append(CollapsibleBox("strategy-{}".format(self.strategy_count)))
+        self.qb_strategy_vbox.addWidget(self.cpb_strategy_lst[-1])
+        # self.qb_strategy_vbox.addWidget(self.qb_strategy_lst[i])
+        self.cpb_strategy_lst[-1].setContentLayout(self.qb_strategy_lst[self.strategy_count-1])
+
+
+    def btn_declineCount_cnct(self,total_tab:TabWidget_set):
+        del total_tab.settings['changable']['sao']['strategy'+str(self.strategy_count)]
+        del self.qb_strategy_lst[-1]
+        del self.cpb_strategy_lst[-1]
+        self.strategy_count-=1
+        if self.cb_strategyChoose.currentIndex == self.strategy_count:
+            self.cb_strategyChoose.setCurrentIndex(self.cb_strategyChoose.currentIndex-1)
+        self.cb_strategyChoose.removeItem(self.strategy_count)
+        self.qb_strategy_vbox.itemAt(self.strategy_count+4).widget().deleteLater()
+        total_tab.settings['changable']['sao']['strategyCount']-=1
+        json_save(total_tab.settings)
+
+
+
+class GroupBox_Strategy(QVBoxLayout):#策略设置            ->滚动区域
     def __init__(self,total_tab:TabWidget_set,index:int):
-        super(GroupBox_Strategy, self).__init__('3T策略{}'.format(index))
+        super(GroupBox_Strategy, self).__init__()
 
         self.flow_fight=total_tab.flow_fight
-
         self.index=index
         self.strategy_idx=total_tab.settings['changable']['sao']['strategyChoose']-1
 
@@ -523,14 +602,22 @@ class GroupBox_Strategy(QGroupBox):#策略设置            ->滚动区域
         self.init(total_tab)
 
     def init(self,total_tab:TabWidget_set) -> None:
-        self.setFixedWidth(500)
-        self.vbox=QVBoxLayout()
-        self.setLayout(self.vbox)
+        # self.setFixedWidth(500)
+
+        self.le_name=QLineEdit(self.strategy['name'])
+        self.le_name.textChanged.connect(lambda cnct:self.le_name_cnct(total_tab))
+        self.addWidget(self.le_name)
         
+
         self.vbox_turn_lst:list[Vbox_Turn]=[]
         for i in range(3):
             self.vbox_turn_lst.append(Vbox_Turn(self,total_tab,i+1))
-            self.vbox.addLayout(self.vbox_turn_lst[i])
+            self.addLayout(self.vbox_turn_lst[i])
+ 
+
+    def le_name_cnct(self,total_tab:TabWidget_set):
+        self.strategy['name']=self.le_name.text()
+        json_save(total_tab.settings)
 
 
 class GroupBox_Assist(QGroupBox):#助战设置              ->滚动区域
@@ -553,21 +640,12 @@ class GroupBox_Assist(QGroupBox):#助战设置              ->滚动区域
         self.vbox.addWidget(self.cb_cloth)
 
 
-        self.la_title1=QLabel('助战礼装选择1')
-        self.vbox.addWidget(self.la_title1)
-        self.hbox_assist_1=Hbox_assist(1)
-        self.vbox.addLayout(self.hbox_assist_1)
-
-
-        self.la_title2=QLabel('助战礼装选择2')
-        self.vbox.addWidget(self.la_title2)
-        self.hbox_assist_2=Hbox_assist(2)
-        self.vbox.addLayout(self.hbox_assist_2)
-
-        self.la_title3=QLabel('助战礼装选择3')
-        self.vbox.addWidget(self.la_title3)
-        self.hbox_assist_3=Hbox_assist(3)
-        self.vbox.addLayout(self.hbox_assist_3)
+        self.hbox_assist_lst:list[Hbox_assist]=[]
+        for i in range(3):
+            self.la_title3=QLabel('助战礼装选择'+str(i+1))
+            self.vbox.addWidget(self.la_title3)
+            self.hbox_assist_lst.append(Hbox_assist(total_tab,i+1))
+            self.vbox.addLayout(self.hbox_assist_lst[-1])
 
     def cb_cnct(self,total_tab:TabWidget_set):
         self.isCloth=self.cb_cloth.isChecked()
@@ -618,13 +696,11 @@ class GroupBox_Continue(QGroupBox):#
         json_save(self.settings)
 
     def le_fightCount_cnct(self):
-        if self.le_fightCount.text()=='a':
-            self.flow_general.fight_count=-1
-        elif self.le_fightCount.text()<='9' and self.le_fightCount.text()>='0':
+        if self.le_fightCount.text()<='9' and self.le_fightCount.text()>='0':
             self.flow_general.fight_count=int(self.le_fightCount.text())
 
-        self.settings['changable']['again']['fight_count']=int(self.le_fightCount.text())
-        json_save(self.settings)
+            self.settings['changable']['again']['fight_count']=int(self.le_fightCount.text())
+            json_save(self.settings)
 
     def cbb_apple_cnct(self):
         self.flow_general.state_drug.apple_index=self.cbb_apple.currentIndex()
@@ -764,15 +840,15 @@ class Vbox_Turn(QVBoxLayout):#回合设置              ->策略
 
 
 class Hbox_assist(QHBoxLayout):#助战设置            ->滚动区域
-    def __init__(self,idx:int):
+    def __init__(self,total_tab:TabWidget_set,idx:int):
         super(Hbox_assist, self).__init__()
 
-        self.bs=0.7
+        self.bs=0.5
         self.assist_servant_road='material\\fgo\\assist_servant_{}.png'.format(str(idx))
         self.assist_cloth_road='material\\fgo\\assist_cloth_{}.png'.format(str(idx))
-        self.init()
+        self.init(total_tab)
     
-    def init(self) -> None:
+    def init(self,total_tab:TabWidget_set) -> None:
         #flsta img
         self.le_assist_name=QLineEdit()
         # img_shw_w(self.le_assist_name, self.assist_servant_road,self.bs)
@@ -789,19 +865,17 @@ class Hbox_assist(QHBoxLayout):#助战设置            ->滚动区域
 
         #flsta btn
         self.btn_update=QPushButton(text='更新')
-        self.btn_update.clicked.connect(lambda cnct:self.btn_cnct())
+        self.btn_update.clicked.connect(lambda cnct:self.btn_cnct(total_tab))
         self.addWidget(self.btn_update)
         #flsto btn
 
 
-    def btn_cnct(self):
+    def btn_cnct(self,total_tab:TabWidget_set):
         #parameter_get
-        para_fn='settings\\fixed\\paspn\\assist_pas.txt'
-        para_f=open(para_fn,'r')
-        para=para_f.read().split('\n')
-        para_f.close()
+        
 
-        assist_servant_pas,assist_cloth_pas=list(map(int,para[0].split(' '))),list(map(int,para[1].split(' ')))
+        assist_servant_pas=total_tab.settings['fixed']['paspn']['assist_pas']['assist_servant']
+        assist_cloth_pas=total_tab.settings['fixed']['paspn']['assist_pas']['assist_cloth']
 
         scr_cap(assist_servant_pas,scr_road,self.assist_servant_road)
         img_shw_w(self.la_img_servant, self.assist_servant_road,self.bs)
@@ -932,9 +1006,11 @@ class State_Before(State_General):
     def __init__(self,total_tab:TabWidget_set):
         super(State_Before,self).__init__(total_tab,'before',1,[2,3])
         self.x,self.y=100,390
+        # self.action_queue=total_tab.action_queue
 
     def act(self):
         # 进入
+        # self.action_queue.add_act(action('before','t',[100,390],3,'none'))
         adb_cmd('adb shell input tap {} {}'.format(int(self.y*bs),int(self.x*bs)))
         time.sleep(3)
 
@@ -942,11 +1018,12 @@ class State_Before(State_General):
 class State_Drug(State_General):
     def __init__(self,total_tab:TabWidget_set):
         super(State_Drug,self).__init__(total_tab,'drug',2,[3,4])
+        # self.action_queue=total_tab.action_queue
         self.pos_lst:list[list[list]]=[
-            [['t',130,290],['t',230,350],],
-            [['t',190,290],['t',230,350],],
-            [['s',floor(500/bs),floor(830/bs),floor(500/bs),floor(200/bs),500],['t',130,290],['t',230,350],],
-            [['s',floor(500/bs),floor(830/bs),floor(500/bs),floor(200/bs),500],['t',190,290],['t',230,350],],
+            [['t',290,130],['t',350,230],],
+            [['t',290,190],['t',350,230],],
+            [['s',floor(500/bs),floor(830/bs),floor(500/bs),floor(200/bs),500],['t',290,130],['t',350,230],],
+            [['s',floor(500/bs),floor(830/bs),floor(500/bs),floor(200/bs),500],['t',290,190],['t',350,230],],
         ]
 
         self.apple_index:int=total_tab.settings['changable']['again']['appleIndex'] #0,1,2,3代表金银蓝铜苹果
@@ -955,8 +1032,9 @@ class State_Drug(State_General):
     def act(self):
         #嗑药
         for pos in self.pos_lst[self.apple_index]:
+            # self.action_queue.add_act(action('drug',pos[0],pos[1:],1.5))
             if pos[0]=='t':
-                adb_cmd('adb shell input tap {} {}'.format(int(pos[2]*bs),int(pos[1]*bs)))
+                adb_cmd('adb shell input tap {} {}'.format(int(pos[1]*bs),int(pos[2]*bs)))
             elif pos[0]=='s':
                 adb_cmd('adb shell input swipe {} {} {} {} {}'.format(int(pos[1]*bs),int(pos[2]*bs),int(pos[3]*bs),int(pos[4]*bs),pos[5]))
             time.sleep(0.3)
@@ -987,7 +1065,7 @@ class State_AssistChoose(State_General):
             self.cloth_img_lst.append(cv2.imread(self.cloth_img_road_lst[index]))
 
         self.x,self.y,self.w,self.h=72,15,90,90
-        self.para,self.servant_num,self.cloth_num=0.8,5,5
+        self.para,self.servant_num,self.cloth_num=0.5,5,5
 
         self.pos=[120,260]
 
@@ -1190,8 +1268,8 @@ class State_Skill(State_InFight):
                 if goal_servant!=0:
                     stayToFight(self)
                 adb_cmd('adb shell input tap {} {}'.format(int(bs*act[1]),int(bs*act[0])))
-                print('turn'+str((self.index+1)/2)+'  skill'+str(step)+'  goal')
-                self.console_log.log_update('turn'+str((self.index+1)/2)+'  skill'+str(step)+'  goal')
+                # print('turn'+str((self.index+1)/2)+'  skill'+str(step)+'  goal')
+                # self.console_log.log_update('turn'+str((self.index+1)/2)+'  skill'+str(step)+'  goal')
                 act_nn=self.pos_lst['0'][0]
                 adb_cmd('adb shell input tap {} {}'.format(int(bs*act_nn[1]),int(bs*act_nn[0])))
                 time.sleep(2)
@@ -1236,6 +1314,8 @@ class State_Order(State_InFight):
 
 
 # #线程设计
+
+
 class Thread_Minicap(QThread):#启动获取
     def __init__(self,total_tab:TabWidget_set):
         super(Thread_Minicap,self).__init__()
@@ -1245,78 +1325,103 @@ class Thread_Minicap(QThread):#启动获取
         self.mc.consume()
 
 
-class Thread_Update(QThread):#更新屏幕              ->主窗口
-    def __init__(self,total_tab:TabWidget_set):
-        super(Thread_Update,self).__init__()
-        self.total_tab = total_tab
-        self._isPause = False
-        self._value = 0
-        self.cond = QWaitCondition()
-        self.mutex = QMutex()
     
-    def run(self):
-        global bs
-        global time_count
-        global scr
-        while True:
-            self.mutex.lock()       # 上锁
-            if self._isPause:
-                self.cond.wait(self.mutex)
-            self.total_tab.update()
-            time.sleep(0.5)
-            self.mutex.unlock()  # 解锁
-         
-    def pause(self):    
-        self._isPause = True
- 
-    def resume(self):
-        self._isPause = False
-        self.cond.wakeAll()
-
-
-class Thread_Run(QThread):
+class Thread_Update(CanPauseThread):#更新屏幕              ->主窗口
     def __init__(self,total_tab:TabWidget_set):
-        super(Thread_Run,self).__init__()
-        
-        self.console_log=total_tab.console_log
+        super(Thread_Update,self).__init__(log=total_tab.console_log)
+        self.total_tab = total_tab
+
+    def action(self):
+        self.total_tab.update()
+        time.sleep(0.5)
+
+
+# class Thread_Update(QThread):#更新屏幕              ->主窗口
+#     def __init__(self,total_tab:TabWidget_set):
+#         super(Thread_Update,self).__init__()
+#         self.total_tab = total_tab
+#         self._isPause = False
+#         self._value = 0
+#         self.cond = QWaitCondition()
+#         self.mutex = QMutex()
+    
+#     def run(self):
+#         global bs
+#         global time_count
+#         global scr
+#         while True:
+#             self.mutex.lock()       # 上锁
+#             if self._isPause:
+#                 self.cond.wait(self.mutex)
+#             self.total_tab.update()
+#             time.sleep(0.5)
+#             self.mutex.unlock()  # 解锁
+         
+#     def pause(self):    
+#         self._isPause = True
+ 
+#     def resume(self):
+#         self._isPause = False
+#         self.cond.wakeAll()
+
+
+class Thread_Run(CanPauseThread):
+    def __init__(self,total_tab:TabWidget_set):
+        super(Thread_Run,self).__init__(total_tab.console_log)
         self.flow_general=total_tab.flow_general
 
-        self._isPause = False
-        self._value = 0
-        self.cond = QWaitCondition()
-        self.mutex = QMutex()
-
-    def run(self):
-        global scr
-        print('test running')
-        self.console_log.log_update('test running')
-        while True:
-            self.mutex.lock()       # 上锁
-            if self._isPause:
-                self.cond.wait(self.mutex)
-            state=self.flow_general.state_lst[self.flow_general.state_idx]
-            if check(state):
-                self.console_log.log_update('NOW {} RUNNING'.format(state.name))
-                state.act()
-            time.sleep(1)
-            
+    def action(self):
+        state=self.flow_general.state_lst[self.flow_general.state_idx]
+        if check(state):
+            self.console_log.log_update('NOW {} RUNNING'.format(state.name))
+            state.act()
+        time.sleep(1)
+    
+    def isQuit(self):
+        return (self.flow_general.fight_current_count==self.flow_general.fight_count)
 
 
-            if self.flow_general.fight_current_count==self.flow_general.fight_count:
-                break
-            self.mutex.unlock()  # 解锁
-        print('test finished')
-        self.console_log.log_update('test finished')
+# class Thread_Run(QThread):
+#     def __init__(self,total_tab:TabWidget_set):
+#         super(Thread_Run,self).__init__()
+        
+#         self.console_log=total_tab.console_log
+#         self.flow_general=total_tab.flow_general
 
-    def pause(self):
-        self._isPause = True
+#         self._isPause = False
+#         self._value = 0
+#         self.cond = QWaitCondition()
+#         self.mutex = QMutex()
+
+#     def run(self):
+#         global scr
+#         print('test running')
+#         self.console_log.log_update('test running')
+#         while True:
+#             self.mutex.lock()       # 上锁
+#             if self._isPause:
+#                 self.cond.wait(self.mutex)
+#             state=self.flow_general.state_lst[self.flow_general.state_idx]
+#             if check(state):
+#                 self.console_log.log_update('NOW {} RUNNING'.format(state.name))
+#                 state.act()
+#             time.sleep(1)
+#             if self.flow_general.fight_current_count==self.flow_general.fight_count:
+#                 break
+#             self.mutex.unlock()  # 解锁
+#         print('test finished')
+#         self.console_log.log_update('test finished')
+
+#     def pause(self):
+#         self._isPause = True
  
-    def resume(self):
-        self._isPause = False
-        self.cond.wakeAll()
+#     def resume(self):
+#         self._isPause = False
+#         self.cond.wakeAll()
 
 
 class Thread_Init(QThread):#启动获取
+
     def __init__(self,total_tab:TabWidget_set):
         super(Thread_Init,self).__init__()
         self.mc=total_tab.mc
@@ -1324,6 +1429,7 @@ class Thread_Init(QThread):#启动获取
         self.thread_mc=total_tab.thread_mc
         self.thread_update=total_tab.thread_update
         self.btn=total_tab.tab1.btn_script_start
+
     def run(self):
         global device
         init_thread()
@@ -1336,24 +1442,87 @@ class Thread_Init(QThread):#启动获取
         self.console_log.log_update('start SERVER')
         self.btn.setEnabled(True)
 
-#日志设计
-class Log():
+
+class Thread_Test(CanPauseThread):
     def __init__(self,total_tab:TabWidget_set):
-        self.console_log:str='none'
-        self.la_log:QLabel=total_tab.tab1.hbox_screen.la_log
-        self.lineNum=1
+        super(Thread_Test,self).__init__(log=total_tab.console_log)
 
-    def log_update(self,text:str,):
-        self.console_log=time.strftime('%H:%M:%S',time.localtime(time.time()))+'\t'+text+'\n'+self.console_log
-        self.lineNum+=1
-        self.la_log.setFixedHeight((2*13-1)*self.lineNum)
-        self.la_log.setText(self.console_log)
+    def action(self):
+        self.console_log.log_update('test test running '+str(self._isPause))
+        time.sleep(0.2)
 
-    def log_reset(self):
-        self.console_log='none'
-        self.la_log.setFixedHeight(2*13-1)
-        self.la_log.setText(self.console_log)
-        self.lineNum=1
+
+# class Thread_Test(QThread):
+
+#     def __init__(self,total_tab:TabWidget_set):
+#         super(Thread_Test,self).__init__()
+        
+#         self.console_log=total_tab.console_log
+
+#         self._isPause = False
+#         self._isRun= False
+#         self._value = 0
+#         self.cond = QWaitCondition()
+#         self.mutex = QMutex()
+
+#     def run(self):
+#         self._isRun= True
+#         while True:
+#             if not self._isRun:
+#                 break
+#             self.mutex.lock()       # 上锁
+#             if self._isPause:
+#                 self.cond.wait(self.mutex)
+#             self.console_log.log_update('test test running '+str(self._isPause))
+#             time.sleep(0.6)
+#             self.mutex.unlock()  # 解锁
+
+#     def pause(self):
+#         self._isPause = True
+ 
+#     def resume(self):
+#         self._isPause = False
+#         self.cond.wakeAll()
+
+
+class Thread_Queue(CanPauseThread):
+    def __init__(self,total_tab:TabWidget_set):
+        super(Thread_Queue,self).__init__(log=total_tab.console_log)
+        self.action_queue=total_tab.action_queue
+
+    def action(self):
+        self.action_queue.realize_act()
+
+
+#动作队列及结构/配备线程
+# action范式 {'name':'xxx','act_type':'s','action_para':[xxx,xxx,xxx,xxx,xxx],'relaxation':xxx,'note':xxx}
+#  {'name':'xxx','act_type':'t','action_para':[xxx,xxx],'relaxation':xxx,'note':xxx}
+class action():
+    def __init__(self,name:str,act_type:str,action_para:list[int],relaxation:float,note:str):
+        self.name = name
+        self.act_type=act_type
+        self.action_para=action_para
+        self.relaxation=relaxation
+        self.note=note
+
+
+class Action_Queue():
+    def __init__(self) -> None:
+        self.queue_lst:list[action]=[]
+    
+    def add_act(self, action:action):
+        self.queue_lst.append(action)
+
+    def realize_act(self):
+        action=self.queue_lst[0]
+        if action.act_type=='t':
+            (x,y)=action.action_para
+            adb_cmd('adb shell input tap {} {}'.format(int(bs*x),int(bs*y)))
+            time.sleep(1)
+        elif action.act_type=='s':
+            (x0,y0,x1,y1,ent)=action.action_para
+            adb_cmd('adb shell input swipe {} {} {} {} {}'.format(int(bs*x0),int(bs*y0),int(bs*x1),int(bs*y1),ent))
+        del self.queue_lst[0]
 
 
 #小功能
@@ -1402,8 +1571,16 @@ def stayToFight(state):
 def set_win():
     # 创建进程
     app = QApplication(sys.argv)  # 创建进程
-    app.setStyleSheet("QLabel,QPushButton,QGroupBox,QCheckBox,QComboBox,QTabWidget,QLineEdit{font-size: 13pt;}")
+    extra = {
+    
+    # Density Scale
+    'density_scale': '1',}
+    apply_stylesheet(app, theme='dark_teal.xml', extra=extra)
     total_tab = TabWidget_set()
+    total_tab.setStyleSheet('font-size: 13pt;style=line-height:200%;color:white;')
+    # self.la_log.setStyleSheet('font-size: 13pt;style=line-height:150%')
+    # apply_stylesheet(app, theme='dark_teal.xml', invert_secondary=True)
+    # app.setStyleSheet("QLabel,QPushButton,QGroupBox,QCheckBox,QComboBox,QTabWidget,QLineEdit,CollapsibleBox{font-size: 13pt;}")
     total_tab.show()
     sys.exit(app.exec_())          # 死循环，监听进程，如果没有这句，程序会闪退
 
@@ -1505,7 +1682,6 @@ if __name__ == '__main__':                               # 主程zzzzzzzzzz
 
     
     # print the maximum x and Y coordinates
-
 
 
     b=0

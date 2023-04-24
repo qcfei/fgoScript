@@ -2,33 +2,46 @@
   "changable": {
     "again": {
       "appleIndex": 3,
-      "fight_count": 3,
+      "fight_count": 2,
       "isAgain": true
     },
     "isCloth": {
-      "isCloth": false
+      "isCloth": true
     },
     "mnqChoose": {
-      "mnqChoose": 1
+      "mnqChoose": 0
     },
     "sao": {
+      "strategyCount": 3,
       "strategyChoose": 1,
       "strategy1": {
+        "name": "REDjiandai",
         "off_act": "",
-        "skill1_act": "110 231 331",
+        "skill1_act": "110 120 130 321 331 231 221 410",
         "order1_act": "a12",
-        "skill2_act": "120 130 211",
+        "skill2_act": "211 311 530 310 110",
         "order2_act": "a12",
-        "skill3_act": "311 321 110 120 130 221 411",
+        "skill3_act": "130 120 321 331",
         "order3_act": "a12"
       },
       "strategy2": {
+        "name": "REDjiandai",
         "off_act": "",
-        "skill1_act": "110 210 221 231 310 331",
+        "skill1_act": "110 120 130 321 331 231 221 410",
         "order1_act": "a12",
-        "skill2_act": "321 421",
+        "skill2_act": "211 311 530 310 110",
         "order2_act": "a12",
-        "skill3_act": "120 130",
+        "skill3_act": "130 120 321 331",
+        "order3_act": "a12"
+      },
+      "strategy3": {
+        "name": "REDjiandai",
+        "off_act": "",
+        "skill1_act": "110 120 130 321 331 231 221 410",
+        "order1_act": "a12",
+        "skill2_act": "211 311 530 310 110",
+        "order2_act": "a12",
+        "skill3_act": "130 120 321 331",
         "order3_act": "a12"
       }
     }
@@ -270,6 +283,14 @@
           [
             250,
             260
+          ],
+          [
+            30,
+            370
+          ],
+          [
+            30,
+            370
           ]
         ],
         "0": [
