@@ -2,7 +2,7 @@
   "changable": {
     "again": {
       "appleIndex": 3,
-      "fight_count": 2,
+      "fight_count": 1,
       "isAgain": true
     },
     "isCloth": {
@@ -12,8 +12,7 @@
       "mnqChoose": 0
     },
     "sao": {
-      "strategyCount": 3,
-      "strategyChoose": 1,
+      "strategyChoose": 2,
       "strategy1": {
         "name": "REDjiandai",
         "off_act": "",
@@ -25,23 +24,33 @@
         "order3_act": "a12"
       },
       "strategy2": {
-        "name": "REDjiandai",
+        "name": "REDgongling",
         "off_act": "",
-        "skill1_act": "110 120 130 321 331 231 221 410",
+        "skill1_act": "110 120 130 221 231 321 331 410",
         "order1_act": "a12",
-        "skill2_act": "211 311 530 310 110",
+        "skill2_act": "211 130 311 110 530 310",
         "order2_act": "a12",
-        "skill3_act": "130 120 321 331",
+        "skill3_act": "120 321 331",
         "order3_act": "a12"
       },
       "strategy3": {
-        "name": "REDjiandai",
+        "name": "REDgongling",
         "off_act": "",
-        "skill1_act": "110 120 130 321 331 231 221 410",
+        "skill1_act": "110 120 130 221 231 321 331 410",
         "order1_act": "a12",
-        "skill2_act": "211 311 530 310 110",
+        "skill2_act": "211 130 311 110 530 310",
         "order2_act": "a12",
-        "skill3_act": "130 120 321 331",
+        "skill3_act": "120 321 331",
+        "order3_act": "a12"
+      },
+      "strategy4": {
+        "name": "REDgongling",
+        "off_act": "",
+        "skill1_act": "110 120 130 221 231 321 331 410",
+        "order1_act": "a12",
+        "skill2_act": "211 130 311 110 530 310",
+        "order2_act": "a12",
+        "skill3_act": "120 321 331",
         "order3_act": "a12"
       }
     }

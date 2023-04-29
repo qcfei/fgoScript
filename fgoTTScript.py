@@ -68,6 +68,7 @@ Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查�
 import os
 import cv2
 import subprocess
+import PyQt5
 from PyQt5.QtCore import Qt,QThread,QWaitCondition,QMutex
 import sys
 from PyQt5.QtWidgets import *
@@ -85,7 +86,8 @@ from log import *
 from thread import *
 from CollapsibleBox import *
 from qt_material import apply_stylesheet
-from pyminitouch import safe_connection, safe_device, MNTDevice, CommandBuilder
+# from pyminitouch import safe_connection, safe_device, MNTDevice, CommandBuilder
+from pyminitouch import MNTDevice
 #minicap相关类
 class Banner:
     def __init__(self):
@@ -182,7 +184,7 @@ class TabWidget_set(QTabWidget):#主窗口             ->None
     def __init__(self):
         global mnq_idx
         super(TabWidget_set, self).__init__()
-        self.setGeometry(300, 500, 1100, 600)
+        self.setGeometry(300, 500, 1100, 630)
         self.setWindowTitle('fgoTTScript')
         self.setWindowIcon(QIcon('litShk.ico'))
         # self.setMaximumSize(1000, 700)
@@ -192,22 +194,25 @@ class TabWidget_set(QTabWidget):#主窗口             ->None
         self.settings=json_read()
         mnq_idx=self.settings['changable']['mnqChoose']['mnqChoose']
 
-        self.tab1 :Widget_run= Widget_run(self)
-        self.addTab(self.tab1, '运行')
 
-        self.console_log=Log(self.tab1.hbox_screen.la_log)
+        self.la_log=QLabel()
+        self.console_log=Log(self.la_log)
         # self.action_queue=Action_Queue()
+
 
         self.flow_fight=Flow_Fight(self)
         self.flow_general=Flow_General(self)
+
+
+        self.tab1 :Widget_run= Widget_run(self)
+        self.addTab(self.tab1, '运行')
+
 
         self.tab2 :Widget_set= Widget_set(self)
         self.addTab(self.tab2, '设置')
 
         
         self.mc = Minicap('localhost', 1717, Banner())
-
-
 
         
         self.thread_update:Thread_Update=Thread_Update(self)
@@ -274,7 +279,7 @@ class Widget_run(QWidget):#运行窗口                 ->主窗口
 
         self.hbox_description = QHBoxLayout()
         self.vbox1.addLayout(self.hbox_description)
-        mnq_idx=total_tab.settings['changable']['mnqChoose']['mnqChoose']
+        mnq_idx=settings['changable']['mnqChoose']['mnqChoose']
         self.la_mnq=QLabel('模拟器:'+mnq[mnq_idx])
         self.hbox_description.addWidget(self.la_mnq)
         self.la_fightCount=QLabel('战斗次数:'+'0')
@@ -285,6 +290,27 @@ class Widget_run(QWidget):#运行窗口                 ->主窗口
         self.la_neighborState=QLabel('neighborState:'+'init')
         self.hbox_description.addWidget(self.la_neighborState)
 
+
+
+        self.hbox_quickSet=QHBoxLayout()
+        self.vbox1.addLayout(self.hbox_quickSet)
+        self.hbox_quickSet.addStretch(2)
+        self.la_quickSet=QLabel('快捷设置：')
+        self.hbox_quickSet.addWidget(self.la_quickSet)
+        self.hbox_quickSet.addStretch(1)
+        self.la_strategyChoose=QLabel('策略选择')
+        self.hbox_quickSet.addWidget(self.la_strategyChoose)
+        self.cb_strategyChoose=Cb_StrategyChoose(total_tab)
+        self.hbox_quickSet.addWidget(self.cb_strategyChoose)
+        self.la_fightCount=QLabel('战斗次数')
+        self.hbox_quickSet.addWidget(self.la_fightCount)
+        self.le_fightCount=Le_FightCount(total_tab)
+        self.hbox_quickSet.addWidget(self.le_fightCount)
+        self.hbox_quickSet.addStretch(2)
+
+        
+
+    
         self.hbox_testBtn=QHBoxLayout()
         self.vbox1.addLayout(self.hbox_testBtn)
         self.hbox_testBtn.addStretch(1)
@@ -297,7 +323,7 @@ class Widget_run(QWidget):#运行窗口                 ->主窗口
         self.hbox_testBtn.addStretch(1)
         
 
-        self.hbox_screen = HBox_screen()
+        self.hbox_screen = HBox_screen(total_tab)
         self.vbox1.addLayout(self.hbox_screen)
 
 
@@ -397,6 +423,7 @@ class Widget_run(QWidget):#运行窗口                 ->主窗口
         total_tab.flow_fight.state_idx=0
         total_tab.flow_general.state_idx=0
         total_tab.flow_general.fight_current_count=0
+        total_tab.flow_general.state_fight.state=1
         self.btn_script_start.setText('运行开始')
 
 
@@ -410,6 +437,11 @@ class Widget_set(QWidget):#设置窗口                 ->主窗口
 
         self.setTitle_list=QVBoxLayout()
         self.hbox.addLayout(self.setTitle_list)
+
+        
+        self.scrollArea_setting=ScrollArea_setting(total_tab)
+        self.scrollArea_setting.setFixedWidth(850)
+        self.scrollArea_setting.verticalScrollBar().valueChanged.connect(lambda cnct: self.scrollBar_cnct())
         
         self.la_lst:list[QLabel]=[]
         self.nm_la_lst:list[str]=['策略',
@@ -419,16 +451,17 @@ class Widget_set(QWidget):#设置窗口                 ->主窗口
                               'value:'+'0',]
         self.num_la:int=len(self.nm_la_lst)-1
         for i in range(self.num_la):
-            self.la_lst.append(QLabel(self.nm_la_lst[i]))
+            self.la_lst.append(setLabel(self.scrollArea_setting.verticalScrollBar(),self.nm_la_lst[i]))
             self.la_lst[-1].setFixedWidth(200)
+            # self.la_lst[-1].connect_customized_slot(lambda cnct: self.la_cnct())
             self.setTitle_list.addWidget(self.la_lst[i])
         # self.la_lst[0].setStyleSheet("background-color:#cccccc;")
         self.la_lst[0].setStyleSheet("background-color:#888888;")
         self.setTitle_list.addStretch(1)
 
-        self.scrollArea_setting=ScrollArea_setting(total_tab)
-        self.scrollArea_setting.setFixedWidth(850)
-        self.scrollArea_setting.verticalScrollBar().valueChanged.connect(lambda cnct: self.scrollBar_cnct())
+        # self.scrollArea_setting=ScrollArea_setting(total_tab)
+        # self.scrollArea_setting.setFixedWidth(850)
+        # self.scrollArea_setting.verticalScrollBar().valueChanged.connect(lambda cnct: self.scrollBar_cnct())
         self.hbox.addWidget(self.scrollArea_setting)
 
         self.hbox.addStretch(1)
@@ -453,16 +486,19 @@ class Widget_set(QWidget):#设置窗口                 ->主窗口
             self.la_lst[i].setStyleSheet("background-color:#313631;")
         # self.la_lst[idx].setStyleSheet("background-color:#cccccc;")
         self.la_lst[idx].setStyleSheet("background-color:#888888;")
+
+    def la_cnct(self):
+        self.scrollArea_setting.verticalScrollBar().setValue(200)
                 
 
 #           子布局
 class HBox_screen(QHBoxLayout):#显示模拟器画面       ->运行窗口
-    def __init__(self):
+    def __init__(self,total_tab:TabWidget_set):
         super(HBox_screen, self).__init__()
 
-        self.init()
+        self.init(total_tab)
 
-    def init(self) -> None:
+    def init(self,total_tab:TabWidget_set) -> None:
         
         self.vbox_screen = QVBoxLayout()
         self.addLayout(self.vbox_screen)
@@ -481,7 +517,8 @@ class HBox_screen(QHBoxLayout):#显示模拟器画面       ->运行窗口
         self.scroll_log.setWidgetResizable(True)
         # self.scroll_log.setFixedHeight(450)
         self.splitter_log.addWidget(self.scroll_log)
-        self.la_log=QLabel('none')
+        self.la_log=total_tab.la_log
+        self.la_log.setText('none')
         self.la_log.setFixedWidth(530)
         self.la_log.setStyleSheet('font-size: 13pt;style=line-height:150%')
         self.scroll_log.setWidget(self.la_log)
@@ -494,9 +531,9 @@ class ScrollArea_setting(QScrollArea):#设置滚动区域   ->设置窗口
     def __init__(self,total_tab:TabWidget_set):
         super(ScrollArea_setting, self).__init__()
 
-        self.strategy_idx=total_tab.settings['changable']['sao']['strategyChoose']-1
+        self.strategy_idx=settings['changable']['sao']['strategyChoose']-1
         self.flow_fight=total_tab.flow_fight
-        self.strategy_count=total_tab.settings['changable']['sao']['strategyCount']
+        self.strategy_count=len(settings['changable']['sao'].keys())-1
         self.init(total_tab)
 
     def init(self,total_tab:TabWidget_set) -> None:
@@ -513,11 +550,7 @@ class ScrollArea_setting(QScrollArea):#设置滚动区域   ->设置窗口
         
         self.la_strategyChoose=QLabel('策略选择')
         self.qb_strategy_vbox.addWidget(self.la_strategyChoose)
-        self.cb_strategyChoose=QComboBox()
-        for i in range(self.strategy_count):
-            self.cb_strategyChoose.addItem(str(i+1))
-        self.cb_strategyChoose.setCurrentIndex(self.strategy_idx)
-        self.cb_strategyChoose.currentIndexChanged.connect(lambda cnct:self.cb_strategyChoose_cnct(total_tab))
+        self.cb_strategyChoose=Cb_StrategyChoose(total_tab)
         self.qb_strategy_vbox.addWidget(self.cb_strategyChoose)
 
         self.btn_addCount=QPushButton('add')
@@ -532,7 +565,7 @@ class ScrollArea_setting(QScrollArea):#设置滚动区域   ->设置窗口
         self.cpb_strategy_lst:list[CollapsibleBox]=[]
         for i in range(self.strategy_count):
             self.qb_strategy_lst.append(GroupBox_Strategy(total_tab,i+1))
-            self.cpb_strategy_lst.append(CollapsibleBox("strategy-{}".format(i+1)))
+            self.cpb_strategy_lst.append(CollapsibleBox(str(i+1)+'-'+settings['changable']['sao']['strategy{}'.format(i+1)]['name']))
             self.qb_strategy_vbox.addWidget(self.cpb_strategy_lst[i])
             # self.qb_strategy_vbox.addWidget(self.qb_strategy_lst[i])
             self.cpb_strategy_lst[i].setContentLayout(self.qb_strategy_lst[i])
@@ -551,33 +584,22 @@ class ScrollArea_setting(QScrollArea):#设置滚动区域   ->设置窗口
 
         self.setWidget(self.win_scrollArea)
 
-    def cb_strategyChoose_cnct(self,total_tab:TabWidget_set):
-        self.strategy_idx=self.cb_strategyChoose.currentIndex()
-        for qb_strategy in self.qb_strategy_lst:
-            qb_strategy.strategy_idx=self.strategy_idx
-        for state_idx in range(3):
-            self.flow_fight.state_lst[2*state_idx+1].strategy_str=total_tab.settings['changable']['sao']['strategy{}'.format(str(self.strategy_idx+1))]['skill{}_act'.format(state_idx+1)]
-            self.flow_fight.state_lst[2*state_idx+2].strategy_str=total_tab.settings['changable']['sao']['strategy{}'.format(str(self.strategy_idx+1))]['order{}_act'.format(state_idx+1)]
-        total_tab.settings['changable']['sao']['strategyChoose']=self.strategy_idx+1
-        json_save(total_tab.settings)
-
 
     def btn_addCount_cnct(self,total_tab:TabWidget_set):
         self.strategy_count+=1
-        total_tab.settings['changable']['sao']['strategyCount']+=1
 
-        total_tab.settings['changable']['sao']['strategy'+str(self.strategy_count)]=total_tab.settings['changable']['sao']['strategy'+str(self.strategy_count-1)]
-        json_save(total_tab.settings)
+        settings['changable']['sao']['strategy'+str(self.strategy_count)]=settings['changable']['sao']['strategy'+str(self.strategy_count-1)]
+        json_save(settings)
         self.cb_strategyChoose.addItem(str(self.strategy_count))
         self.qb_strategy_lst.append(GroupBox_Strategy(total_tab,self.strategy_count))
-        self.cpb_strategy_lst.append(CollapsibleBox("strategy-{}".format(self.strategy_count)))
+        self.cpb_strategy_lst.append(CollapsibleBox(str(self.strategy_count)+'-'+settings['changable']['sao']['strategy{}'.format(self.strategy_count)]['name']))
         self.qb_strategy_vbox.addWidget(self.cpb_strategy_lst[-1])
         # self.qb_strategy_vbox.addWidget(self.qb_strategy_lst[i])
         self.cpb_strategy_lst[-1].setContentLayout(self.qb_strategy_lst[self.strategy_count-1])
 
 
     def btn_declineCount_cnct(self,total_tab:TabWidget_set):
-        del total_tab.settings['changable']['sao']['strategy'+str(self.strategy_count)]
+        del settings['changable']['sao']['strategy'+str(self.strategy_count)]
         del self.qb_strategy_lst[-1]
         del self.cpb_strategy_lst[-1]
         self.strategy_count-=1
@@ -585,8 +607,7 @@ class ScrollArea_setting(QScrollArea):#设置滚动区域   ->设置窗口
             self.cb_strategyChoose.setCurrentIndex(self.cb_strategyChoose.currentIndex-1)
         self.cb_strategyChoose.removeItem(self.strategy_count)
         self.qb_strategy_vbox.itemAt(self.strategy_count+4).widget().deleteLater()
-        total_tab.settings['changable']['sao']['strategyCount']-=1
-        json_save(total_tab.settings)
+        json_save(settings)
 
 
 
@@ -596,9 +617,8 @@ class GroupBox_Strategy(QVBoxLayout):#策略设置            ->滚动区域
 
         self.flow_fight=total_tab.flow_fight
         self.index=index
-        self.strategy_idx=total_tab.settings['changable']['sao']['strategyChoose']-1
 
-        self.strategy=total_tab.settings['changable']['sao']['strategy{}'.format(index)]
+        self.strategy=settings['changable']['sao']['strategy{}'.format(index)]
         self.init(total_tab)
 
     def init(self,total_tab:TabWidget_set) -> None:
@@ -617,7 +637,7 @@ class GroupBox_Strategy(QVBoxLayout):#策略设置            ->滚动区域
 
     def le_name_cnct(self,total_tab:TabWidget_set):
         self.strategy['name']=self.le_name.text()
-        json_save(total_tab.settings)
+        json_save(settings)
 
 
 class GroupBox_Assist(QGroupBox):#助战设置              ->滚动区域
@@ -626,7 +646,7 @@ class GroupBox_Assist(QGroupBox):#助战设置              ->滚动区域
 
         self.state_assistChoose=total_tab.flow_general.state_assistChoose
 
-        self.isCloth=total_tab.settings['changable']['isCloth']['isCloth']
+        self.isCloth=settings['changable']['isCloth']['isCloth']
         self.init(total_tab)
     
     def init(self,total_tab:TabWidget_set) -> None:
@@ -650,8 +670,8 @@ class GroupBox_Assist(QGroupBox):#助战设置              ->滚动区域
     def cb_cnct(self,total_tab:TabWidget_set):
         self.isCloth=self.cb_cloth.isChecked()
         self.state_assistChoose.isCloth=self.isCloth
-        total_tab.settings['changable']['isCloth']['isCloth']=self.isCloth
-        json_save(total_tab.settings)
+        settings['changable']['isCloth']['isCloth']=self.isCloth
+        json_save(settings)
 
 
 class GroupBox_Continue(QGroupBox):#
@@ -659,11 +679,10 @@ class GroupBox_Continue(QGroupBox):#
         super(GroupBox_Continue, self).__init__('多次战斗设置')
 
         self.flow_general=total_tab.flow_general
-        self.settings=total_tab.settings
 
-        self.init()
+        self.init(total_tab)
 
-    def init(self) -> None:
+    def init(self,total_tab:TabWidget_set) -> None:
         self.vbox=QVBoxLayout()
         self.setLayout(self.vbox)
 
@@ -673,9 +692,7 @@ class GroupBox_Continue(QGroupBox):#
         self.vbox.addWidget(self.cb_isAgain)
         self.la_fightCount=QLabel('战斗次数')
         self.vbox.addWidget(self.la_fightCount)
-        self.le_fightCount=QLineEdit()
-        self.le_fightCount.setText(str(self.flow_general.fight_count))
-        self.le_fightCount.textChanged.connect(lambda cnct:self.le_fightCount_cnct())
+        self.le_fightCount=Le_FightCount(total_tab)
         self.vbox.addWidget(self.le_fightCount)
         self.la_apple=QLabel('吃苹果类型')
         self.vbox.addWidget(self.la_apple)
@@ -692,20 +709,13 @@ class GroupBox_Continue(QGroupBox):#
 
     def cb_isAgain_cnct(self):
         self.flow_general.state_fightAgain.isAgain=self.cb_isAgain.isChecked()
-        self.settings['changable']['again']['isAgain']=self.cb_isAgain.isChecked()
-        json_save(self.settings)
-
-    def le_fightCount_cnct(self):
-        if self.le_fightCount.text()<='9' and self.le_fightCount.text()>='0':
-            self.flow_general.fight_count=int(self.le_fightCount.text())
-
-            self.settings['changable']['again']['fight_count']=int(self.le_fightCount.text())
-            json_save(self.settings)
+        settings['changable']['again']['isAgain']=self.cb_isAgain.isChecked()
+        json_save(settings)
 
     def cbb_apple_cnct(self):
         self.flow_general.state_drug.apple_index=self.cbb_apple.currentIndex()
-        self.settings['changable']['again']['appleIndex']=self.cbb_apple.currentIndex()
-        json_save(self.settings)
+        settings['changable']['again']['appleIndex']=self.cbb_apple.currentIndex()
+        json_save(settings)
 
         
 class GroupBox_Mnq(QGroupBox):#模拟器设置                 ->滚动区域
@@ -760,8 +770,8 @@ class GroupBox_Mnq(QGroupBox):#模拟器设置                 ->滚动区域
         global mnq_idx
         mnq_idx=self.cbb_mnq.currentIndex()
         self.la_mnq.setText('模拟器:'+mnq[mnq_idx])
-        total_tab.settings['changable']['mnqChoose']['mnqChoose']=mnq_idx
-        json_save(total_tab.settings)
+        settings['changable']['mnqChoose']['mnqChoose']=mnq_idx
+        json_save(settings)
 
     def mnq_test_cnct(self):
         adb_cmd('adb disconnect')
@@ -826,7 +836,7 @@ class Vbox_Turn(QVBoxLayout):#回合设置              ->策略
     def le_skill_cnct(self,parent:GroupBox_Strategy,total_tab:TabWidget_set,turnIdx:int):
         self.skill=self.le_skill_check.text()
         parent.strategy['skill{}_act'.format(turnIdx)]=self.le_skill_check.text()
-        json_save(total_tab.settings)
+        json_save(settings)
         if parent.strategy_idx+1==parent.index:
             parent.flow_fight.state_lst[2*self.turnIdx-1].strategy_str=self.skill
 
@@ -834,7 +844,7 @@ class Vbox_Turn(QVBoxLayout):#回合设置              ->策略
     def le_order_cnct(self,parent:GroupBox_Strategy,total_tab:TabWidget_set,turnIdx:int):
         self.order=self.le_order_check.text()
         parent.strategy['order{}_act'.format(turnIdx)]=self.le_order_check.text()
-        json_save(total_tab.settings)
+        json_save(settings)
         if parent.strategy_idx+1==parent.index:
             parent.flow_fight.state_lst[2*self.turnIdx].strategy_str=self.order
 
@@ -874,8 +884,8 @@ class Hbox_assist(QHBoxLayout):#助战设置            ->滚动区域
         #parameter_get
         
 
-        assist_servant_pas=total_tab.settings['fixed']['paspn']['assist_pas']['assist_servant']
-        assist_cloth_pas=total_tab.settings['fixed']['paspn']['assist_pas']['assist_cloth']
+        assist_servant_pas=settings['fixed']['paspn']['assist_pas']['assist_servant']
+        assist_cloth_pas=settings['fixed']['paspn']['assist_pas']['assist_cloth']
 
         scr_cap(assist_servant_pas,scr_road,self.assist_servant_road)
         img_shw_w(self.la_img_servant, self.assist_servant_road,self.bs)
@@ -883,6 +893,41 @@ class Hbox_assist(QHBoxLayout):#助战设置            ->滚动区域
         scr_cap(assist_cloth_pas,scr_road,self.assist_cloth_road)
         img_shw_w(self.la_img_cloth, self.assist_cloth_road,self.bs)
    
+
+class Cb_StrategyChoose(QComboBox):
+    def __init__(self,total_tab:TabWidget_set):
+        super(Cb_StrategyChoose, self).__init__()
+        self.strategy_count=len(settings['changable']['sao'].keys())-1
+        self.strategy_idx=settings['changable']['sao']['strategyChoose']-1
+        for i in range(self.strategy_count):
+            self.addItem(str(i+1))
+        self.setCurrentIndex(self.strategy_idx)
+        self.currentIndexChanged.connect(lambda cnct:self.cb_strategyChoose_cnct(total_tab))
+
+    def cb_strategyChoose_cnct(self,total_tab:TabWidget_set):
+        self.strategy_idx=self.currentIndex()
+        for state_idx in range(3):
+            total_tab.flow_fight.state_lst[2*state_idx+1].strategy_str=settings['changable']['sao']['strategy{}'.format(str(self.strategy_idx+1))]['skill{}_act'.format(state_idx+1)]
+            total_tab.flow_fight.state_lst[2*state_idx+2].strategy_str=settings['changable']['sao']['strategy{}'.format(str(self.strategy_idx+1))]['order{}_act'.format(state_idx+1)]
+        settings['changable']['sao']['strategyChoose']=self.strategy_idx+1
+        json_save(settings)
+
+
+class Le_FightCount(QLineEdit):
+    def __init__(self,total_tab:TabWidget_set):
+        super(Le_FightCount, self).__init__()
+        self.setText(str(total_tab.flow_general.fight_count))
+        self.textChanged.connect(lambda cnct:self.le_fightCount_cnct(total_tab))
+
+    def le_fightCount_cnct(self,total_tab:TabWidget_set):
+        if self.text()<='9' and self.text()>='0':
+            total_tab.flow_general.fight_count=int(self.text())
+
+            settings['changable']['again']['fight_count']=int(self.text())
+            json_save(settings)
+
+
+
 
 #流程设计
 #流式
@@ -909,7 +954,7 @@ class Flow_General():
         # 状态
         self.state_idx:int=0
         
-        self.fight_count=total_tab.settings['changable']['again']['fight_count']
+        self.fight_count=settings['changable']['again']['fight_count']
         
         self.fight_current_count=0
         # 是否运行
@@ -977,7 +1022,7 @@ class State_General(State):
         self.feature_img:np.ndarray=cv2.imread(self.feature_img_road)
 
 
-        self.feature_paspn:list[float]=total_tab.settings['fixed']['paspn']['{}_paspn'.format(name)]
+        self.feature_paspn:list[float]=settings['fixed']['paspn']['{}_paspn'.format(name)]
         
 
 
@@ -1026,7 +1071,7 @@ class State_Drug(State_General):
             [['s',floor(500/bs),floor(830/bs),floor(500/bs),floor(200/bs),500],['t',290,190],['t',350,230],],
         ]
 
-        self.apple_index:int=total_tab.settings['changable']['again']['appleIndex'] #0,1,2,3代表金银蓝铜苹果
+        self.apple_index:int=settings['changable']['again']['appleIndex'] #0,1,2,3代表金银蓝铜苹果
         
 
     def act(self):
@@ -1183,10 +1228,13 @@ class State_Fight(State_General):
         super(State_Fight,self).__init__(total_tab,'fight',5,[6])
         self.x,self.y=270,460
         self.flow_fight=total_tab.flow_fight
+        self.state=1
     
     def act(self):
-        for i in range(1,len(self.flow_fight.state_lst)):
-            self.flow_fight.state_lst[i].act()
+        self.flow_fight.state_lst[self.state].act()
+        self.state+=1
+        if self.state==len(self.flow_fight.state_lst):
+            self.state=1
 
 
 class State_Result(State_General):
@@ -1197,7 +1245,7 @@ class State_Result(State_General):
     
     def act(self):
         #点击多下  进入再来一次环节
-        for i in range(5):
+        for i in range(8):
             adb_cmd('adb shell input tap {} {}'.format(int(self.y*bs),int(self.x*bs)))
             time.sleep(0.3)
         self.parent.fight_current_count+=1
@@ -1209,7 +1257,7 @@ class State_FightAgain(State_General):
         self.xAgain,self.yAgain=230,350
         self.xExit,self.yExit=20,40
         
-        self.isAgain=total_tab.settings['changable']['again']['isAgain']
+        self.isAgain=settings['changable']['again']['isAgain']
                 
     
     def act(self):
@@ -1227,12 +1275,12 @@ class State_Skill(State_InFight):
 
 
         self.console_log:Log=total_tab.console_log
-        strategyChoose=total_tab.settings['changable']['sao']['strategyChoose']
-        self.strategy_str=total_tab.settings['changable']['sao']['strategy{}'.format(str(strategyChoose))]['skill{}_act'.format(str(index+1))]
+        strategyChoose=settings['changable']['sao']['strategyChoose']
+        self.strategy_str=settings['changable']['sao']['strategy{}'.format(str(strategyChoose))]['skill{}_act'.format(str(index+1))]
         
         self.feature_img_road:str='material\\fgo\\f_skillGoal.png'
         self.feature_img:np.ndarray=cv2.imread(self.feature_img_road)
-        self.feature_paspn:list[float]=total_tab.settings['fixed']['paspn']['f_skillGoal_paspn']
+        self.feature_paspn:list[float]=settings['fixed']['paspn']['f_skillGoal_paspn']
 
         self.y:int=int(self.feature_paspn[0])
         self.x:int=int(self.feature_paspn[1])
@@ -1242,7 +1290,7 @@ class State_Skill(State_InFight):
         self.num:int=int(self.feature_paspn[5])
 
 
-        self.pos_lst:dict[list[list[int]]]=total_tab.settings['fixed']['paspn']['skill_pas']
+        self.pos_lst:dict[list[list[int]]]=settings['fixed']['paspn']['skill_pas']
 
     def act(self):
         if self.strategy_str!='':
@@ -1281,10 +1329,10 @@ class State_Order(State_InFight):
         
         self.console_log:Log=total_tab.console_log
         
-        strategyChoose=total_tab.settings['changable']['sao']['strategyChoose']
-        self.strategy_str=total_tab.settings['changable']['sao']['strategy{}'.format(str(strategyChoose))]['order{}_act'.format(str(index+1))]
+        strategyChoose=settings['changable']['sao']['strategyChoose']
+        self.strategy_str=settings['changable']['sao']['strategy{}'.format(str(strategyChoose))]['order{}_act'.format(str(index+1))]
 
-        self.pos_lst:dict[list[list[int]]]=total_tab.settings['fixed']['paspn']['order_pas']
+        self.pos_lst:dict[list[list[int]]]=settings['fixed']['paspn']['order_pas']
 
     def act(self):
         adb_cmd('adb shell input tap {} {}'.format(int(bs*445),int(bs*220)))
@@ -1523,6 +1571,23 @@ class Action_Queue():
             (x0,y0,x1,y1,ent)=action.action_para
             adb_cmd('adb shell input swipe {} {} {} {} {}'.format(int(bs*x0),int(bs*y0),int(bs*x1),int(bs*y1),ent))
         del self.queue_lst[0]
+
+
+
+
+class setLabel(QLabel):
+    button_clicked_signal = QtCore.pyqtSignal()
+    def __init__(self,scrollBar:QScrollBar,name:str, parent=None):
+        super(setLabel, self).__init__(parent)
+        self.scrollBar=scrollBar
+        self.setText(name)
+        
+    def mouseReleaseEvent(self, QMouseEvent):
+        # self.button_clicked_signal.emit()
+        self.scrollBar.setValue(200)
+
+    def connect_customized_slot(self, func):
+        self.button_clicked_signal.connect(func)
 
 
 #小功能
