@@ -289,7 +289,7 @@ class Widget_run(QWidget):#运行窗口                 ->主窗口
         self.hbox_description.addWidget(self.la_state)
         self.la_neighborState=QLabel('neighborState:'+'init')
         self.hbox_description.addWidget(self.la_neighborState)
-
+    
 
 
         self.hbox_quickSet=QHBoxLayout()
@@ -298,19 +298,19 @@ class Widget_run(QWidget):#运行窗口                 ->主窗口
         self.la_quickSet=QLabel('快捷设置：')
         self.hbox_quickSet.addWidget(self.la_quickSet)
         self.hbox_quickSet.addStretch(1)
-        self.la_strategyChoose=QLabel('策略选择')
+        self.la_strategyChoose=QLabel('策略选择')   
         self.hbox_quickSet.addWidget(self.la_strategyChoose)
         self.cb_strategyChoose=Cb_StrategyChoose(total_tab)
         self.hbox_quickSet.addWidget(self.cb_strategyChoose)
-        self.la_fightCount=QLabel('战斗次数')
-        self.hbox_quickSet.addWidget(self.la_fightCount)
+        self.la_fightCountt=QLabel('战斗次数')
+        self.hbox_quickSet.addWidget(self.la_fightCountt)
         self.le_fightCount=Le_FightCount(total_tab)
         self.hbox_quickSet.addWidget(self.le_fightCount)
         self.hbox_quickSet.addStretch(2)
 
         
 
-    
+        
         self.hbox_testBtn=QHBoxLayout()
         self.vbox1.addLayout(self.hbox_testBtn)
         self.hbox_testBtn.addStretch(1)
@@ -420,10 +420,8 @@ class Widget_run(QWidget):#运行窗口                 ->主窗口
         total_tab.console_log.log_reset()
         total_tab.thread_run._isRun=False
         # total_tab.thread_queue._isRun=False
-        total_tab.flow_fight.state_idx=0
-        total_tab.flow_general.state_idx=0
-        total_tab.flow_general.fight_current_count=0
-        total_tab.flow_general.state_fight.state=1
+        total_tab.flow_fight.__init__(total_tab)
+        total_tab.flow_general.__init__(total_tab)
         self.btn_script_start.setText('运行开始')
 
 
@@ -837,7 +835,7 @@ class Vbox_Turn(QVBoxLayout):#回合设置              ->策略
         self.skill=self.le_skill_check.text()
         parent.strategy['skill{}_act'.format(turnIdx)]=self.le_skill_check.text()
         json_save(settings)
-        if parent.strategy_idx+1==parent.index:
+        if total_tab.tab2.scrollArea_setting.cb_strategyChoose.currentIndex()+1==parent.index:
             parent.flow_fight.state_lst[2*self.turnIdx-1].strategy_str=self.skill
 
         
@@ -845,7 +843,7 @@ class Vbox_Turn(QVBoxLayout):#回合设置              ->策略
         self.order=self.le_order_check.text()
         parent.strategy['order{}_act'.format(turnIdx)]=self.le_order_check.text()
         json_save(settings)
-        if parent.strategy_idx+1==parent.index:
+        if total_tab.tab2.scrollArea_setting.cb_strategyChoose.currentIndex()+1==parent.index:
             parent.flow_fight.state_lst[2*self.turnIdx].strategy_str=self.order
 
 
@@ -1113,6 +1111,10 @@ class State_AssistChoose(State_General):
         self.para,self.servant_num,self.cloth_num=0.5,5,5
 
         self.pos=[120,260]
+        
+        self.chooseTurn=1
+        self.servantCount=0
+        self.isOutput=True
 
 
     # def act_addidate(self):
@@ -1161,56 +1163,57 @@ class State_AssistChoose(State_General):
     def act(self):
         #判断是否有可用从者
         time.sleep(3)
-        print('进行战斗次数'+str(self.parent.fight_current_count))
-        self.console_log.log_update('进行战斗次数'+str(self.parent.fight_current_count))
-        chooseTurn=1
-        servantCount=0
+        if self.isOutput:
+            print('进行战斗次数'+str(self.parent.fight_current_count))
+            self.console_log.log_update('进行战斗次数'+str(self.parent.fight_current_count))
+            self.isOutput=False
         xca,yca,xcc,ycc=0,0,0,0
         flag=0
-        while True:
-            servantCount+=1
+        # while True:
+        self.servantCount+=1
         #判断从者、礼装是否正确
-            print('Aassist Servant Choose Try {}'.format(str(servantCount)))
-            self.console_log.log_update('assist servant choose try {}'.format(str(servantCount)))
-        
-            if self.isCloth:
-                for idx in range(3):
-                    resa=cv2.matchTemplate(scr,self.servant_img_lst[idx],cv2.TM_CCOEFF_NORMED)
-                    resc=cv2.matchTemplate(scr,self.cloth_img_lst[idx],cv2.TM_CCOEFF_NORMED)
-                    if resa.max()>0.7 and resc.max()>0.7:
-                        yca,xca=np.where(resa==np.max(resa))[0][0]+int(self.h/2),np.where(resa==np.max(resa))[1][0]+int(self.h/2)
-                        ycc,xcc=np.where(resa==np.max(resa))[0][0]+int(self.h/2),np.where(resa==np.max(resa))[1][0]+int(self.h/2)
-                        if abs(yca-ycc)<270:
-                            flag=1
-                            break
-            else:
-                for idx in range(3):
-                    resa=cv2.matchTemplate(scr,self.servant_img_lst[idx],cv2.TM_CCOEFF_NORMED)
-                    if resa.max()>0.7:
-                        yca,xca=np.where(resa==np.max(resa))[0][0]+int(self.h/2),np.where(resa==np.max(resa))[1][0]+int(self.h/2)
+        print('Aassist Servant Choose Try {}'.format(str(self.servantCount)))
+        self.console_log.log_update('assist servant choose try {}'.format(str(self.servantCount)))
+    
+        if self.isCloth:
+            for idx in range(3):
+                resa=cv2.matchTemplate(scr,self.servant_img_lst[idx],cv2.TM_CCOEFF_NORMED)
+                resc=cv2.matchTemplate(scr,self.cloth_img_lst[idx],cv2.TM_CCOEFF_NORMED)
+                if resa.max()>0.7 and resc.max()>0.7:
+                    yca,xca=np.where(resa==np.max(resa))[0][0]+int(self.h/2),np.where(resa==np.max(resa))[1][0]+int(self.h/2)
+                    ycc,xcc=np.where(resa==np.max(resa))[0][0]+int(self.h/2),np.where(resa==np.max(resa))[1][0]+int(self.h/2)
+                    if abs(yca-ycc)<270:
                         flag=1
                         break
+        else:
+            for idx in range(3):
+                resa=cv2.matchTemplate(scr,self.servant_img_lst[idx],cv2.TM_CCOEFF_NORMED)
+                if resa.max()>0.7:
+                    yca,xca=np.where(resa==np.max(resa))[0][0]+int(self.h/2),np.where(resa==np.max(resa))[1][0]+int(self.h/2)
+                    flag=1
+                    break
 
-            if flag==1:
-                # 判断正确
-                adb_cmd('adb shell input tap {} {}'.format(int(xca*bs),int(yca*bs)))
-                print('Success')
-                self.console_log.log_update('Success')
-                time.sleep(1)
-                break
-            else:
-                # 判断错误
-                print('Fail {}'.format(str(servantCount)))
-                adb_cmd('adb shell input swipe 400 940 400 400 500')
-                time.sleep(3)
-                self.console_log.log_update('Fail {}'.format(str(servantCount)))
-            if servantCount==6:
-                chooseTurn+=1
-                servantCount=0
-                adb_cmd('adb shell input tap {} {}'.format(int(380*bs),int(60*bs)))
-                time.sleep(1)
-                adb_cmd('adb shell input tap {} {}'.format(int(350*bs),int(230*bs)))
-                time.sleep(1)
+        if flag==1:
+            # 判断正确
+            adb_cmd('adb shell input tap {} {}'.format(int(xca*bs),int(yca*bs)))
+            print('Success')
+            self.console_log.log_update('Success')
+            time.sleep(1)
+            # self.__init__(total_tab)
+            # break
+        else:
+            # 判断错误
+            print('Fail {}'.format(str(self.servantCount)))
+            adb_cmd('adb shell input swipe 400 940 400 400 500')
+            time.sleep(3)
+            self.console_log.log_update('Fail {}'.format(str(self.servantCount)))
+        if self.servantCount==6:
+            self.chooseTurn+=1
+            self.servantCount=0
+            adb_cmd('adb shell input tap {} {}'.format(int(380*bs),int(60*bs)))
+            time.sleep(1)
+            adb_cmd('adb shell input tap {} {}'.format(int(350*bs),int(230*bs)))
+            time.sleep(1)
 
 
 class State_Prepare(State_General):
@@ -1289,6 +1292,8 @@ class State_Skill(State_InFight):
         self.para:float=self.feature_paspn[4]
         self.num:int=int(self.feature_paspn[5])
 
+        # self.step_idx=0
+
 
         self.pos_lst:dict[list[list[int]]]=settings['fixed']['paspn']['skill_pas']
 
@@ -1298,8 +1303,11 @@ class State_Skill(State_InFight):
             self.strategy_lst:list[int]=list(map(int,part.findall(self.strategy_str)))
             
         stayToFight(self.parent_state)
+        # if check(self.parent_state):
+        # step=self.strategy_lst[self.step_idx]
+        # self.step_idx+=1
         for step in self.strategy_lst:
-            # time.sleep(0.4)
+            time.sleep(0.4)
             launcher=floor(step/100)
             skill_idx=floor(step/10)%10
             goal_servant=step%10
@@ -1735,18 +1743,7 @@ if __name__ == '__main__':                               # 主程zzzzzzzzzz
     
 
     set_win()
-    # os.popen('adb connect 127.0.0.1:62001')
-    # os.popen('adb forward tcp:1111 localabstract:minitouch')  # 执行了adb端口转发
-    # os.popen('adb shell LD_LIBRARY_PATH=/data/local/tmp/minitouch /data/local/tmp/minitouch/minitouch')  # 启动了minitouch服务
-    # socket_touch = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    # socket_touch.connect(('localhost',1111))
-    # data_uft8='d 0 100 100 50\nc\n'
-    # data=data_uft8.encode()
-    # socket_touch.send(data)
 
-
-    
-    # print the maximum x and Y coordinates
 
 
     b=0

@@ -1,7 +1,7 @@
 {
   "changable": {
     "again": {
-      "appleIndex": 3,
+      "appleIndex": 1,
       "fight_count": 1,
       "isAgain": true
     },
@@ -26,9 +26,9 @@
       "strategy2": {
         "name": "REDgongling",
         "off_act": "",
-        "skill1_act": "110 120 130 221 231 321 331 410",
+        "skill1_act": "110 120 130 231 331",
         "order1_act": "a12",
-        "skill2_act": "211 130 311 110 530 310",
+        "skill2_act": "211 130 311 321 110 530 310 221 1410",
         "order2_act": "a12",
         "skill3_act": "120 321 331",
         "order3_act": "a12"
